@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptPad - UI Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-tertiary: #242836;
+    --bg-hover: #2a2f3e;
+    --bg-active: #323848;
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a6;
+    --text-muted: #6b7280;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-soft: rgba(59, 130, 246, 0.15);
+    --border: #2a2f3e;
+    --success: #34d399;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #080a0f;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 30px;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  h1.page-title {
+    width: 100%;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+  }
+  .page-subtitle {
+    width: 100%;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+
+  .mockup-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* ===== SIDE PANEL MOCKUP ===== */
+  .side-panel {
+    width: 360px;
+    height: 640px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .panel-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-secondary);
+  }
+  .logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .panel-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+  }
+  .header-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .search-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+  }
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+  .search-wrapper {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .search-shortcut {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .panel-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  .panel-content::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+
+  .section-label {
+    padding: 8px 16px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .script-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .script-item:hover {
+    background: var(--bg-hover);
+  }
+  .script-item.active {
+    background: var(--accent-soft);
+    border-left-color: var(--accent);
+  }
+  .script-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .script-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .script-title {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .script-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .copy-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.15s;
+    opacity: 0;
+    flex-shrink: 0;
+  }
+  .script-item:hover .copy-btn {
+    opacity: 1;
+  }
+  .copy-btn:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  .folder-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .folder-item:hover {
+    background: var(--bg-hover);
+  }
+  .folder-icon {
+    font-size: 14px;
+  }
+  .folder-name {
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .folder-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .folder-arrow {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .panel-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+  }
+  .add-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .add-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  /* ===== SCRIPT VIEW MOCKUP ===== */
+  .script-view {
+    width: 360px;
+    height: 640px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .script-view-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .back-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+  .back-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .script-view-title {
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .copy-all-btn {
+    padding: 6px 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s;
+  }
+  .copy-all-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .script-tags {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .tag {
+    padding: 3px 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .script-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .script-body::-webkit-scrollbar {
+    width: 4px;
+  }
+  .script-body::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+
+  .script-section {
+    margin-bottom: 16px;
+  }
+  .script-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .script-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent);
+    position: relative;
+  }
+  .script-text .highlight {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--warning);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .bullet-list {
+    list-style: none;
+    padding: 0;
+  }
+  .bullet-list li {
+    padding: 6px 0 6px 20px;
+    font-size: 13px;
+    color: var(--text-primary);
+    position: relative;
+    line-height: 1.5;
+  }
+  .bullet-list li::before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .branch-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .branch-btn {
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .branch-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .branch-arrow {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .section-copy-btn {
+    float: right;
+    padding: 3px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .section-copy-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .script-view-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+    display: flex;
+    gap: 8px;
+  }
+  .footer-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  .footer-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .footer-btn.danger:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+
+  /* ===== INTERACTIVE STATE ===== */
+  .view-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    padding: 4px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+  .nav-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+  .nav-tab.active {
+    background: var(--accent);
+    color: white;
+  }
+  .nav-tab:hover:not(.active) {
+    color: var(--text-primary);
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--success);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Language badge */
+  .lang-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .lang-badge:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Pin indicator */
+  .pin { color: var(--warning); font-size: 11px; }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    body { padding: 20px 10px; }
+    .side-panel, .script-view { width: 100%; max-width: 400px; }
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">⚡ ScriptPad — UI Mockup</h1>
+<p class="page-subtitle">Interactive Chrome Extension Mockup &middot; Click scripts to explore &middot; Dark Mode</p>
+
+<!-- ===== SIDE PANEL: MAIN VIEW ===== -->
+<div class="view-container">
+  <div class="mockup-label">📋 Main Panel (Side Panel)</div>
+  <div class="side-panel" id="mainPanel">
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="logo">SP</div>
+      <h2>ScriptPad</h2>
+      <div class="header-actions">
+        <button class="lang-badge" onclick="toggleLang()" id="langBtn">EN</button>
+        <button class="icon-btn" title="Settings">⚙️</button>
+        <button class="icon-btn" title="Theme" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search scripts..." id="searchInput" oninput="filterScripts()">
+        <span class="search-shortcut">⌘S</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="panel-content" id="panelContent">
+      <!-- Pinned -->
+      <div class="section-label">📌 Pinned</div>
+      <div class="script-item active" onclick="showScript('opening')">
+        <span class="script-icon">📄</span>
+        <div class="script-info">
+          <div class="script-title">Opening Script <span class="pin">📌</span></div>
+          <div class="script-meta">Openers &middot; Updated 2h ago</div>
+        </div>
+        <button class="copy-btn" onclick="event.stopPropagation(); copyToast()">📋</button>
+      </div>
+      <div class="script-item" onclick="showScript('price')">
+        <span class="script-icon">📄</span>
+        <div class="script-info">
+          <div class="script-title">Price Objection Handler <span class="pin">📌</span></div>
+          <div class="script-meta">Objections &middot; Updated 1d ago</div>
+        </div>
+        <button class="copy-btn" onclick="event.stopPropagation(); copyToast()">📋</button>
+      </div>
+
+      <!-- Folders -->
+      <div class="section-label" style="margin-top: 8px;">📁 Folders</div>
+      <div class="folder-item">
+        <span class="folder-icon">📂</span>
+        <span class="folder-name">Openers</span>
+        <span class="folder-count">3</span>
+        <span class="folder-arrow">›</span>
+      </div>
+      <div class="folder-item">
+        <span class="folder-icon">📂</span>
+        <span class="folder-name">Objection Handlers</span>
+        <span class="folder-count">5</span>
+        <span class="folder-arrow">›</span>
+      </div>
+      <div class="folder-item">
+        <span class="folder-icon">📂</span>
+        <span class="folder-name">Closers</span>
+        <span class="folder-count">4</span>
+        <span class="folder-arrow">›</span>
+      </div>
+      <div class="folder-item">
+        <span class="folder-icon">📂</span>
+        <span class="folder-name">FAQs</span>
+        <span class="folder-count">8</span>
+        <span class="folder-arrow">›</span>
+      </div>
+      <div class="folder-item">
+        <span class="folder-icon">📂</span>
+        <span class="folder-name">Compliance</span>
+        <span class="folder-count">3</span>
+        <span class="folder-arrow">›</span>
+      </div>
+
+      <!-- Recent -->
+      <div class="section-label" style="margin-top: 8px;">🕐 Recent</div>
+      <div class="script-item" onclick="showScript('closing')">
+        <span class="script-icon">📄</span>
+        <div class="script-info">
+          <div class="script-title">Soft Close Script</div>
+          <div class="script-meta">Closers &middot; Used 30 min ago</div>
+        </div>
+        <button class="copy-btn" onclick="event.stopPropagation(); copyToast()">📋</button>
+      </div>
+      <div class="script-item">
+        <span class="script-icon">📄</span>
+        <div class="script-info">
+          <div class="script-title">Refund Policy</div>
+          <div class="script-meta">FAQs &middot; Used 1h ago</div>
+        </div>
+        <button class="copy-btn" onclick="event.stopPropagation(); copyToast()">📋</button>
+      </div>
+      <div class="script-item">
+        <span class="script-icon">📄</span>
+        <div class="script-info">
+          <div class="script-title">Compliance Disclosure</div>
+          <div class="script-meta">Compliance &middot; Used 2h ago</div>
+        </div>
+        <button class="copy-btn" onclick="event.stopPropagation(); copyToast()">📋</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="panel-footer">
+      <button class="add-btn">+ New Script</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPT VIEW ===== -->
+<div class="view-container">
+  <div class="mockup-label">📖 Script Detail View</div>
+  <div class="script-view">
+    <!-- Header -->
+    <div class="script-view-header">
+      <button class="back-btn">←</button>
+      <span class="script-view-title">Price Objection Handler</span>
+      <button class="copy-all-btn" onclick="copyToast()">📋 Copy All</button>
+    </div>
+
+    <!-- Tags -->
+    <div class="script-tags">
+      <span class="tag">#objection</span>
+      <span class="tag">#price</span>
+      <span class="tag">#common</span>
+    </div>
+
+    <!-- Body -->
+    <div class="script-body">
+      <!-- Section 1 -->
+      <div class="script-section">
+        <div class="script-section-title">
+          💬 Initial Response
+          <button class="section-copy-btn" onclick="copyToast()">Copy</button>
+        </div>
+        <div class="script-text">
+          "I completely understand — <span class="highlight">price is always an important factor</span>. Let me share what you're getting so you can see the full picture..."
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="script-section">
+        <div class="script-section-title">
+          ✦ Value Points
+          <button class="section-copy-btn" onclick="copyToast()">Copy</button>
+        </div>
+        <ul class="bullet-list">
+          <li><strong>24/7 support</strong> — dedicated team, not a chatbot</li>
+          <li><strong>Free onboarding</strong> — we set everything up for you</li>
+          <li><strong>No contract</strong> — cancel anytime, no penalties</li>
+          <li><strong>ROI guarantee</strong> — if you don't see results in 30 days, full refund</li>
+        </ul>
+      </div>
+
+      <!-- Section 3: Branching -->
+      <div class="script-section">
+        <div class="script-section-title">
+          🔀 If still hesitant...
+        </div>
+        <div class="branch-options">
+          <button class="branch-btn">
+            <span class="branch-arrow">→</span>
+            "Can I think about it?" — Urgency script
+          </button>
+          <button class="branch-btn">
+            <span class="branch-arrow">→</span>
+            "Competitor is cheaper" — Comparison script
+          </button>
+          <button class="branch-btn">
+            <span class="branch-arrow">→</span>
+            "I need to ask my manager" — Decision-maker script
+          </button>
+          <button class="branch-btn">
+            <span class="branch-arrow">→</span>
+            Open to payment plan — Offer flexible pricing
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="script-section">
+        <div class="script-section-title">
+          🎯 Closing Transition
+          <button class="section-copy-btn" onclick="copyToast()">Copy</button>
+        </div>
+        <div class="script-text">
+          "Based on what you've shared, I think the <span class="highlight">[Plan Name]</span> would be the perfect fit. Would you like me to get you started today?"
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="script-view-footer">
+      <button class="footer-btn">✏️ Edit</button>
+      <button class="footer-btn">📌 Pin</button>
+      <button class="footer-btn">📁 Move</button>
+      <button class="footer-btn danger">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✓ Copied to clipboard!</div>
+
+<script>
+  function copyToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1500);
+  }
+
+  function toggleLang() {
+    const btn = document.getElementById('langBtn');
+    btn.textContent = btn.textContent === 'EN' ? 'ES' : 'EN';
+  }
+
+  function filterScripts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const items = document.querySelectorAll('#panelContent .script-item, #panelContent .folder-item');
+    const sections = document.querySelectorAll('#panelContent .section-label');
+
+    if (!query) {
+      items.forEach(item => item.style.display = 'flex');
+      sections.forEach(s => s.style.display = 'flex');
+      return;
+    }
+
+    sections.forEach(s => s.style.display = 'none');
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(query) ? 'flex' : 'none';
+    });
+  }
+
+  function showScript(name) {
+    copyToast();
+  }
+</script>
+
+</body>
+</html>

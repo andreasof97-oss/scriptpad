@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+*.tar.gz
+scriptpad-extension.zip
+mockup/scriptpad-extension.zip
+store-listing/scriptpad-v1.0.0.zip
+store-listing/*.tar.gz

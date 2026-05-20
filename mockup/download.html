@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Download ScriptPad</title>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e8eaed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2a2f3e;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p { color: #9aa0a6; font-size: 14px; margin-bottom: 24px; }
+    .download-btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .download-btn:hover { background: #2563eb; }
+    .size { color: #6b7280; font-size: 12px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">SP</div>
+    <h1>ScriptPad Extension</h1>
+    <p>Download, unzip, and load in Chrome Developer Mode</p>
+    <a href="./scriptpad-extension.zip" download="scriptpad-extension.zip" class="download-btn">⬇️ Download ZIP</a>
+    <p class="size">~22 KB</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScriptPad — Store Listing Assets</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117; color: #e8eaed;
+      max-width: 800px; margin: 0 auto; padding: 40px 20px;
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    h2 { font-size: 20px; margin-top: 32px; margin-bottom: 16px; color: #3b82f6; }
+    .subtitle { color: #9aa0a6; margin-bottom: 32px; }
+    a { color: #3b82f6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .card {
+      background: #1a1d27; border-radius: 12px; padding: 20px;
+      margin-bottom: 12px; border: 1px solid #2a2f3e;
+    }
+    .card h3 { font-size: 16px; margin-bottom: 4px; }
+    .card p { color: #9aa0a6; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    img { max-width: 100%; border-radius: 8px; border: 1px solid #2a2f3e; }
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 600; margin-left: 8px;
+    }
+    .badge.ready { background: rgba(52,211,153,0.15); color: #34d399; }
+    .badge.manual { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  </style>
+</head>
+<body>
+  <h1>⚡ ScriptPad — Chrome Web Store Assets</h1>
+  <p class="subtitle">Everything you need to submit to the Chrome Web Store</p>
+
+  <h2>📝 Store Description</h2>
+  <div class="grid">
+    <a href="./description-en.md" class="card">
+      <h3>English Description <span class="badge ready">✓ Ready</span></h3>
+      <p>Full store listing copy in English</p>
+    </a>
+    <a href="./description-es.md" class="card">
+      <h3>Spanish Description <span class="badge ready">✓ Ready</span></h3>
+      <p>Full store listing copy in Spanish</p>
+    </a>
+  </div>
+
+  <h2>🔒 Privacy Policy</h2>
+  <div class="card">
+    <a href="./privacy-policy.html">
+      <h3>Privacy Policy Page <span class="badge ready">✓ Ready</span></h3>
+      <p>Host this at a public URL — Google requires it</p>
+    </a>
+  </div>
+
+  <h2>🎨 Promo Images</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Small Tile (440×280) <span class="badge ready">✓ Ready</span></h3>
+      <img src="./images/promo-small-440x280.png" alt="Small promo tile">
+    </div>
+    <div class="card">
+      <h3>Marquee (1400×560) <span class="badge ready">✓ Ready</span></h3>
+      <img src="./images/promo-marquee-1400x560.png" alt="Marquee promo">
+    </div>
+  </div>
+
+  <h2>📸 Screenshots</h2>
+  <p style="color: #9aa0a6; margin-bottom: 16px; font-size: 14px;">
+    Open the <a href="./screenshots/screenshot-generator.html">screenshot generator</a> to view all 5 screenshots at 1280×800. 
+    Use your browser's screenshot tool (or Ctrl+Shift+P → "Capture node screenshot" in DevTools) to save each one.
+  </p>
+  <div class="card">
+    <a href="./screenshots/screenshot-generator.html">
+      <h3>Screenshot Generator (5 screenshots) <span class="badge manual">Open to capture</span></h3>
+      <p>1. Main View  |  2. Script Detail  |  3. Search  |  4. Dark/Light Themes  |  5. Keyboard Shortcuts</p>
+    </a>
+  </div>
+
+  <h2>✅ Submission Checklist</h2>
+  <div class="card">
+    <p>☐ Register as Chrome Developer ($5 one-time fee) → <a href="https://chrome.google.com/webstore/devconsole" target="_blank">Developer Dashboard</a></p>
+    <p>☐ Host privacy policy at a public URL</p>
+    <p>☐ Upload extension ZIP</p>
+    <p>☐ Fill in store listing (copy from description files above)</p>
+    <p>☐ Upload icon (128px), screenshots (1280×800), promo images</p>
+    <p>☐ Select category: "Productivity"</p>
+    <p>☐ Submit for review (typically 1-3 business days)</p>
+  </div>
+</body>
+</html>

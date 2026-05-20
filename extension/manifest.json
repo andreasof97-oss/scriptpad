@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "ScriptPad",
+  "version": "1.0.0",
+  "description": "Your scripts. Always ready. One click away. Organize call scripts, objection handlers, and quick-reference info for call center agents.",
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open ScriptPad"
+    }
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScriptPad</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- MAIN VIEW -->
+    <div id="mainView" class="view active">
+      <header class="panel-header">
+        <div class="logo">SP</div>
+        <h2 class="app-title">ScriptPad</h2>
+        <div class="header-actions">
+          <button class="lang-badge" id="langBtn" title="Toggle language"></button>
+          <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+          <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+        </div>
+      </header>
+
+      <div class="search-bar">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search scripts...">
+          <span class="search-shortcut">⌘S</span>
+        </div>
+      </div>
+
+      <div class="panel-content" id="panelContent">
+        <!-- Dynamic content rendered by JS -->
+      </div>
+
+      <div class="panel-footer">
+        <button class="add-btn" id="newScriptBtn">+ New Script</button>
+      </div>
+    </div>
+
+    <!-- SCRIPT DETAIL VIEW -->
+    <div id="scriptView" class="view">
+      <header class="script-view-header">
+        <button class="back-btn" id="backBtn">←</button>
+        <h2 class="script-view-title" id="scriptViewTitle"></h2>
+        <button class="copy-all-btn" id="copyAllBtn">📋 Copy All</button>
+      </header>
+
+      <div class="script-tags" id="scriptViewTags"></div>
+
+      <div class="script-body" id="scriptViewBody"></div>
+
+      <div class="script-view-footer">
+        <button class="footer-btn" id="editScriptBtn">✏️ <span data-i18n="edit">Edit</span></button>
+        <button class="footer-btn" id="pinScriptBtn">📌 <span data-i18n="pin">Pin</span></button>
+        <button class="footer-btn danger" id="deleteScriptBtn">🗑️ <span data-i18n="delete">Delete</span></button>
+      </div>
+    </div>
+
+    <!-- SCRIPT EDITOR VIEW -->
+    <div id="editorView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="editorBackBtn">←</button>
+        <h2 class="editor-title" id="editorTitle">New Script</h2>
+        <button class="save-btn" id="saveScriptBtn">Save</button>
+      </header>
+
+      <div class="editor-content">
+        <div class="form-group">
+          <label data-i18n="scriptTitle">Script Title</label>
+          <input type="text" id="editorTitleInput" class="form-input" placeholder="e.g., Opening Script">
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="folder">Folder</label>
+          <select id="editorFolderSelect" class="form-select"></select>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="tags">Tags</label>
+          <input type="text" id="editorTagsInput" class="form-input" placeholder="Add tags (comma separated)">
+        </div>
+
+        <div class="form-group editor-body-group">
+          <label data-i18n="scriptBody">Script Body</label>
+          <div class="editor-toolbar">
+            <button class="toolbar-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button class="toolbar-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Bullet list">•</button>
+            <button class="toolbar-btn" data-cmd="highlight" title="Highlight">🖍</button>
+          </div>
+          <div id="editorBodyInput" class="form-richtext" contenteditable="true" data-placeholder="Write your script here..."></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div id="settingsView" class="view">
+      <header class="settings-header">
+        <button class="back-btn" id="settingsBackBtn">←</button>
+        <h2 data-i18n="settings">Settings</h2>
+      </header>
+
+      <div class="settings-content">
+        <div class="settings-section">
+          <h3 data-i18n="theme">Theme</h3>
+          <div class="settings-row">
+            <button class="theme-option" id="darkThemeBtn" data-theme="dark">🌙 <span data-i18n="dark">Dark</span></button>
+            <button class="theme-option" id="lightThemeBtn" data-theme="light">☀️ <span data-i18n="light">Light</span></button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3 data-i18n="language">Language</h3>
+          <div class="settings-row">
+            <button class="lang-option" data-lang="en">English</button>
+            <button class="lang-option" data-lang="es">Español</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3 data-i18n="importExport">Import / Export</h3>
+          <div class="settings-row vertical">
+            <button class="settings-btn" id="importBtn">📥 <span data-i18n="importScripts">Import Scripts (JSON)</span></button>
+            <button class="settings-btn" id="exportBtn">📤 <span data-i18n="exportScripts">Export Scripts (JSON)</span></button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none;">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3 data-i18n="folders">Folders</h3>
+          <div id="folderManager" class="folder-manager"></div>
+          <button class="settings-btn" id="newFolderBtn">📁 <span data-i18n="newFolder">+ New Folder</span></button>
+        </div>
+
+        <div class="settings-section">
+          <h3 data-i18n="keyboardShortcuts">Keyboard Shortcuts</h3>
+          <div class="shortcut-list">
+            <div class="shortcut-item"><span data-i18n="shortcutOpen">Open ScriptPad</span><kbd>Ctrl+Shift+S</kbd></div>
+            <div class="shortcut-item"><span data-i18n="shortcutSearch">Focus search</span><kbd>/</kbd></div>
+            <div class="shortcut-item"><span data-i18n="shortcutNavigate">Navigate scripts</span><kbd>↑ ↓</kbd></div>
+            <div class="shortcut-item"><span data-i18n="shortcutExpand">Expand script</span><kbd>Enter</kbd></div>
+            <div class="shortcut-item"><span data-i18n="shortcutClose">Close / Go back</span><kbd>Escape</kbd></div>
+          </div>
+        </div>
+
+        <div class="settings-section about">
+          <p>ScriptPad v1.0.0</p>
+          <p class="text-muted">Your scripts. Always ready. One click away.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOLDER VIEW -->
+    <div id="folderView" class="view">
+      <header class="folder-view-header">
+        <button class="back-btn" id="folderBackBtn">←</button>
+        <h2 class="folder-view-title" id="folderViewTitle"></h2>
+        <span class="folder-view-count" id="folderViewCount"></span>
+      </header>
+      <div class="panel-content" id="folderContent"></div>
+    </div>
+  </div>
+
+  <!-- Onboarding Overlay -->
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-container">
+      <button class="onboarding-skip" id="onboardingSkip">Skip</button>
+
+      <div class="onboarding-slides" id="onboardingSlides">
+        <!-- Slide 0: Welcome -->
+        <div class="onboarding-slide active" data-slide="0">
+          <div class="onboarding-hero">
+            <div class="onboarding-logo">⚡</div>
+            <h1 class="onboarding-title" id="onboardingTitle">Welcome to ScriptPad ⚡</h1>
+            <p class="onboarding-subtitle" id="onboardingSubtitle">Your scripts. Always ready. One click away.</p>
+          </div>
+        </div>
+
+        <!-- Slide 1: Organize -->
+        <div class="onboarding-slide" data-slide="1">
+          <div class="onboarding-feature">
+            <div class="onboarding-feature-icon" id="onbIcon1">📁</div>
+            <h2 class="onboarding-feature-title" id="onbTitle1">Organize Your Scripts</h2>
+            <p class="onboarding-feature-desc" id="onbDesc1">Create folders, tag your scripts, and find anything instantly with fuzzy search.</p>
+          </div>
+        </div>
+
+        <!-- Slide 2: Copy -->
+        <div class="onboarding-slide" data-slide="2">
+          <div class="onboarding-feature">
+            <div class="onboarding-feature-icon" id="onbIcon2">📋</div>
+            <h2 class="onboarding-feature-title" id="onbTitle2">Copy in One Click</h2>
+            <p class="onboarding-feature-desc" id="onbDesc2">Click any script to open it, then copy to clipboard instantly — right in the middle of a call.</p>
+          </div>
+        </div>
+
+        <!-- Slide 3: Keyboard -->
+        <div class="onboarding-slide" data-slide="3">
+          <div class="onboarding-feature">
+            <div class="onboarding-feature-icon" id="onbIcon3">⌨️</div>
+            <h2 class="onboarding-feature-title" id="onbTitle3">Keyboard-First Speed</h2>
+            <p class="onboarding-feature-desc" id="onbDesc3">Press / to search, arrow keys to navigate, Enter to open. Never leave the keyboard.</p>
+          </div>
+        </div>
+
+        <!-- Slide 4: Theme & Language -->
+        <div class="onboarding-slide" data-slide="4">
+          <div class="onboarding-feature">
+            <div class="onboarding-feature-icon" id="onbIcon4">🌙</div>
+            <h2 class="onboarding-feature-title" id="onbTitle4">Dark Mode & Bilingual</h2>
+            <p class="onboarding-feature-desc" id="onbDesc4">Easy on the eyes with dark mode. Switch between English and Español anytime.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="onboarding-nav">
+        <div class="onboarding-dots" id="onboardingDots">
+          <span class="onboarding-dot active" data-dot="0"></span>
+          <span class="onboarding-dot" data-dot="1"></span>
+          <span class="onboarding-dot" data-dot="2"></span>
+          <span class="onboarding-dot" data-dot="3"></span>
+          <span class="onboarding-dot" data-dot="4"></span>
+        </div>
+        <div class="onboarding-buttons">
+          <button class="onboarding-btn secondary" id="onboardingBack" style="display:none">Back</button>
+          <button class="onboarding-btn primary" id="onboardingNext">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Confirm dialog -->
+  <div class="overlay" id="overlay">
+    <div class="confirm-dialog" id="confirmDialog">
+      <h3 id="confirmTitle"></h3>
+      <p id="confirmText"></p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" id="confirmCancel">Cancel</button>
+        <button class="confirm-delete" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="search.js"></script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
