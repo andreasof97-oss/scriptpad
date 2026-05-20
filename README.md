@@ -50,7 +50,7 @@ scriptpad/
 
 ## 🛡️ Privacy
 
-ScriptPad stores everything **locally on your device**. No accounts, no servers, no tracking. [Read our Privacy Policy](https://YOUR-USERNAME.github.io/scriptpad/store-listing/privacy-policy.html).
+ScriptPad stores everything **locally on your device**. No accounts, no servers, no tracking. [Read our Privacy Policy](https://andreasof97-oss.github.io/scriptpad/store-listing/privacy-policy.html).
 
 ## 🎯 Built For
 
