@@ -45,7 +45,7 @@ const StorageAPI = (() => {
     return scripts.find(s => s.id === id) || null;
   }
 
-  async function createScript({ title, body, tags, folderId, pinned }) {
+  async function createScript({ title, body, tags, folderId, pinned, type, nodes, startNodeId }) {
     const data = await getAll();
     const now = new Date().toISOString();
     const script = {
@@ -55,9 +55,15 @@ const StorageAPI = (() => {
       body: body || '',
       tags: tags || [],
       pinned: pinned || false,
+      type: type || 'standard',
       createdAt: now,
       updatedAt: now
     };
+    if (type === 'branching') {
+      script.nodes = nodes || [];
+      script.startNodeId = startNodeId || null;
+      delete script.body;
+    }
     data.scripts.push(script);
     await saveAll({ scripts: data.scripts });
     return script;
@@ -156,16 +162,25 @@ const StorageAPI = (() => {
       // Validate and sanitize
       const sanitized = {
         folders: Array.isArray(data.folders) ? data.folders : [],
-        scripts: data.scripts.map(s => ({
-          id: s.id || uuid(),
-          folderId: s.folderId || null,
-          title: s.title || '',
-          body: s.body || '',
-          tags: Array.isArray(s.tags) ? s.tags : [],
-          pinned: !!s.pinned,
-          createdAt: s.createdAt || new Date().toISOString(),
-          updatedAt: s.updatedAt || new Date().toISOString()
-        })),
+        scripts: data.scripts.map(s => {
+          const base = {
+            id: s.id || uuid(),
+            folderId: s.folderId || null,
+            title: s.title || '',
+            tags: Array.isArray(s.tags) ? s.tags : [],
+            pinned: !!s.pinned,
+            type: s.type || 'standard',
+            createdAt: s.createdAt || new Date().toISOString(),
+            updatedAt: s.updatedAt || new Date().toISOString()
+          };
+          if (s.type === 'branching') {
+            base.nodes = Array.isArray(s.nodes) ? s.nodes : [];
+            base.startNodeId = s.startNodeId || null;
+          } else {
+            base.body = s.body || '';
+          }
+          return base;
+        }),
         settings: data.settings || { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' }
       };
       await saveAll(sanitized);
@@ -185,6 +200,10 @@ const StorageAPI = (() => {
     const folderId1 = uuid();
     const folderId2 = uuid();
     const folderId3 = uuid();
+
+    const branchingNodeIds = {
+      n1: uuid(), n2: uuid(), n3: uuid(), n4: uuid(), n5: uuid(), n6: uuid()
+    };
 
     const seedData = {
       folders: [
@@ -231,6 +250,67 @@ const StorageAPI = (() => {
           tags: ['faq', 'refund', 'policy'],
           pinned: false,
           createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+          updatedAt: new Date(Date.now() - 3600000).toISOString()
+        },
+        // Branching seed script
+        {
+          id: uuid(),
+          folderId: folderId1,
+          title: 'Sales Qualification Flow',
+          type: 'branching',
+          tags: ['qualification', 'branching', 'sales'],
+          pinned: false,
+          startNodeId: branchingNodeIds.n1,
+          nodes: [
+            {
+              id: branchingNodeIds.n1,
+              label: 'Opening',
+              body: '<p><strong>Greeting:</strong></p><p>"Hi, this is <span style="color:#fbbf24">[Your Name]</span> from <span style="color:#fbbf24">[Company]</span>. Am I speaking with <span style="color:#fbbf24">[Prospect Name]</span>?"</p><p><strong>Purpose:</strong></p><p>"Great! The reason for my call is we help companies like yours reduce <span style="color:#fbbf24">[pain point]</span> by up to 40%. I\'d love to ask a couple of quick questions to see if it\'s a fit. Do you have two minutes?"</p>',
+              choices: [
+                { label: 'Yes, go ahead', targetNodeId: branchingNodeIds.n2 },
+                { label: 'Not a good time', targetNodeId: branchingNodeIds.n5 },
+                { label: 'Not interested', targetNodeId: branchingNodeIds.n4 }
+              ]
+            },
+            {
+              id: branchingNodeIds.n2,
+              label: 'Qualification Questions',
+              body: '<p><strong>Budget:</strong></p><p>"What are you currently spending on <span style="color:#fbbf24">[solution area]</span> per month?"</p><p><strong>Timeline:</strong></p><p>"When are you looking to have a solution in place?"</p><p><strong>Authority:</strong></p><p>"Besides yourself, who else would be involved in making this decision?"</p><p><strong>Need:</strong></p><p>"What\'s the biggest challenge you\'re facing with <span style="color:#fbbf24">[pain point]</span> right now?"</p>',
+              choices: [
+                { label: 'Has budget & authority', targetNodeId: branchingNodeIds.n3 },
+                { label: 'Needs manager approval', targetNodeId: branchingNodeIds.n5 },
+                { label: 'No budget right now', targetNodeId: branchingNodeIds.n6 }
+              ]
+            },
+            {
+              id: branchingNodeIds.n3,
+              label: 'Close — Book Demo',
+              body: '<p><strong>Transition:</strong></p><p>"Based on what you\'ve shared, I think we can really help. The next step would be a quick 15-minute demo where I\'ll show you exactly how we solve <span style="color:#fbbf24">[their pain point]</span>."</p><p><strong>Close:</strong></p><p>"I have availability <span style="color:#fbbf24">[Day 1]</span> at <span style="color:#fbbf24">[Time]</span> or <span style="color:#fbbf24">[Day 2]</span> at <span style="color:#fbbf24">[Time]</span>. Which works better for you?"</p><p><strong>Confirm:</strong></p><ul><li>Repeat date, time, and email</li><li>"You\'ll receive a calendar invite shortly. Looking forward to it!"</li></ul>',
+              choices: []
+            },
+            {
+              id: branchingNodeIds.n4,
+              label: 'Objection — Not Interested',
+              body: '<p><strong>Acknowledge:</strong></p><p>"I completely understand, and I appreciate your honesty."</p><p><strong>Curiosity hook:</strong></p><p>"Just out of curiosity — if there was a way to <span style="color:#fbbf24">[key benefit]</span> without <span style="color:#fbbf24">[common friction]</span>, would that be worth a 2-minute conversation?"</p><p><strong>If still no:</strong></p><p>"No problem at all. Could I send you a quick one-pager by email? That way if things change, you\'ll have it handy."</p>',
+              choices: [
+                { label: 'Willing to hear more', targetNodeId: branchingNodeIds.n2 },
+                { label: 'Hard no — send email', targetNodeId: branchingNodeIds.n6 }
+              ]
+            },
+            {
+              id: branchingNodeIds.n5,
+              label: 'Schedule Follow-up',
+              body: '<p><strong>Set callback:</strong></p><p>"No problem at all! When would be a better time to reconnect?"</p><p><strong>Options:</strong></p><ul><li>"How about <span style="color:#fbbf24">[Day]</span> at <span style="color:#fbbf24">[Time]</span>?"</li><li>"Morning or afternoon — what\'s better for you?"</li></ul><p><strong>Confirm:</strong></p><p>"Perfect, I\'ll give you a call on <span style="color:#fbbf24">[Day/Time]</span>. And just so I\'m prepared — can I grab your email in case I need to send anything over beforehand?"</p>',
+              choices: []
+            },
+            {
+              id: branchingNodeIds.n6,
+              label: 'Wrap Up — Send Info',
+              body: '<p><strong>Email follow-up:</strong></p><p>"I\'ll send that right over. Could I grab your best email?"</p><p><strong>After getting email:</strong></p><p>"You\'ll see an email from <span style="color:#fbbf24">[Company]</span> with a quick overview. If anything catches your eye, just hit reply and I\'ll set up a proper demo."</p><p><strong>Closing:</strong></p><p>"Thanks for your time today, <span style="color:#fbbf24">[Name]</span>. Have a great rest of your day!"</p>',
+              choices: []
+            }
+          ],
+          createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
           updatedAt: new Date(Date.now() - 3600000).toISOString()
         }
       ],

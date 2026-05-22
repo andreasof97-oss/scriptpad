@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <!-- SCRIPT DETAIL VIEW -->
+    <!-- SCRIPT DETAIL VIEW (standard) -->
     <div id="scriptView" class="view">
       <header class="script-view-header">
         <button class="back-btn" id="backBtn">←</button>
@@ -57,7 +57,61 @@
       </div>
     </div>
 
-    <!-- SCRIPT EDITOR VIEW -->
+    <!-- BRANCHING SCRIPT VIEWER -->
+    <div id="branchingView" class="view">
+      <header class="script-view-header">
+        <button class="back-btn" id="branchingBackBtn">←</button>
+        <h2 class="script-view-title" id="branchingViewTitle"></h2>
+        <button class="copy-all-btn" id="branchingCopyBtn">📋 <span data-i18n="copy">Copy</span></button>
+      </header>
+
+      <div class="script-tags" id="branchingViewTags"></div>
+
+      <!-- Breadcrumb trail -->
+      <div class="branching-breadcrumb" id="branchingBreadcrumb"></div>
+
+      <!-- Node content area -->
+      <div class="branching-node-content" id="branchingNodeContent">
+        <div class="branching-node-label" id="branchingNodeLabel"></div>
+        <div class="branching-node-body" id="branchingNodeBody"></div>
+      </div>
+
+      <!-- Choice buttons -->
+      <div class="branching-choices" id="branchingChoices"></div>
+
+      <!-- Navigation -->
+      <div class="branching-nav" id="branchingNav">
+        <button class="branching-nav-btn" id="branchingGoBack">← <span data-i18n="goBack">Back</span></button>
+        <button class="branching-nav-btn" id="branchingStartOver">↺ <span data-i18n="startOver">Start Over</span></button>
+      </div>
+
+      <div class="script-view-footer">
+        <button class="footer-btn" id="branchingEditBtn">✏️ <span data-i18n="edit">Edit</span></button>
+        <button class="footer-btn" id="branchingPinBtn">📌 <span data-i18n="pin">Pin</span></button>
+        <button class="footer-btn danger" id="branchingDeleteBtn">🗑️ <span data-i18n="delete">Delete</span></button>
+      </div>
+    </div>
+
+    <!-- SCRIPT TYPE CHOOSER -->
+    <div id="typeChooserView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="typeChooserBackBtn">←</button>
+        <h2 class="editor-title" data-i18n="chooseScriptType">Choose Script Type</h2>
+      </header>
+      <div class="type-chooser-content">
+        <p class="type-chooser-hint" data-i18n="chooseScriptTypeHint">Standard scripts have a single body. Branching scripts guide agents through decision trees.</p>
+        <button class="type-chooser-option" id="chooseStandard">
+          <span class="type-chooser-icon">📄</span>
+          <span class="type-chooser-label" data-i18n="standardScript">Standard Script</span>
+        </button>
+        <button class="type-chooser-option" id="chooseBranching">
+          <span class="type-chooser-icon">🔀</span>
+          <span class="type-chooser-label" data-i18n="branchingScript">Branching Script</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SCRIPT EDITOR VIEW (standard) -->
     <div id="editorView" class="view">
       <header class="editor-header">
         <button class="back-btn" id="editorBackBtn">←</button>
@@ -81,6 +135,11 @@
           <input type="text" id="editorTagsInput" class="form-input" placeholder="Add tags (comma separated)">
         </div>
 
+        <!-- Type switch button (only visible when editing) -->
+        <div class="form-group" id="typeSwitchGroup" style="display:none">
+          <button class="settings-btn type-switch-btn" id="switchTypeBtnStandard">🔀 <span data-i18n="switchToBranching">Switch to Branching</span></button>
+        </div>
+
         <div class="form-group editor-body-group">
           <label data-i18n="scriptBody">Script Body</label>
           <div class="editor-toolbar">
@@ -90,6 +149,82 @@
             <button class="toolbar-btn" data-cmd="highlight" title="Highlight">🖍</button>
           </div>
           <div id="editorBodyInput" class="form-richtext" contenteditable="true" data-placeholder="Write your script here..."></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRANCHING SCRIPT EDITOR VIEW -->
+    <div id="branchingEditorView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="branchEditorBackBtn">←</button>
+        <h2 class="editor-title" id="branchEditorTitle">New Branching Script</h2>
+        <button class="save-btn" id="saveBranchingBtn" data-i18n="save">Save</button>
+      </header>
+
+      <div class="editor-content branching-editor-content">
+        <div class="form-group">
+          <label data-i18n="scriptTitle">Script Title</label>
+          <input type="text" id="branchEditorTitleInput" class="form-input" placeholder="e.g., Sales Qualification Flow">
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="folder">Folder</label>
+          <select id="branchEditorFolderSelect" class="form-select"></select>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="tags">Tags</label>
+          <input type="text" id="branchEditorTagsInput" class="form-input" placeholder="Add tags (comma separated)">
+        </div>
+
+        <!-- Type switch button -->
+        <div class="form-group" id="typeSwitchGroupBranching" style="display:none">
+          <button class="settings-btn type-switch-btn" id="switchTypeBtnBranching">📄 <span data-i18n="switchToStandard">Switch to Standard</span></button>
+        </div>
+
+        <!-- Node list -->
+        <div class="form-group">
+          <label data-i18n="nodes">Nodes</label>
+          <div id="branchEditorNodeList" class="branch-node-list"></div>
+          <button class="settings-btn branch-add-node-btn" id="addNodeBtn">➕ <span data-i18n="addNode">+ Add Node</span></button>
+        </div>
+
+        <!-- Selected node editor -->
+        <div id="branchNodeEditorPanel" class="branch-node-editor-panel" style="display:none">
+          <div class="branch-node-editor-header">
+            <h3 data-i18n="editNode">Edit Node</h3>
+            <button class="icon-btn branch-node-close" id="closeNodeEditor">✕</button>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="nodeLabel">Node Label</label>
+            <input type="text" id="nodeEditorLabel" class="form-input" placeholder="e.g., Opening">
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="startNode">Start Node</label>
+            <label class="branch-checkbox-label">
+              <input type="checkbox" id="nodeEditorIsStart">
+              <span>This is the starting node</span>
+            </label>
+          </div>
+
+          <div class="form-group editor-body-group">
+            <label data-i18n="scriptBody">Script Body</label>
+            <div class="editor-toolbar" id="branchNodeToolbar">
+              <button class="toolbar-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button class="toolbar-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Bullet list">•</button>
+              <button class="toolbar-btn" data-cmd="highlight" title="Highlight">🖍</button>
+            </div>
+            <div id="nodeEditorBody" class="form-richtext" contenteditable="true" data-placeholder="Write the script content for this node..."></div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="choices">Choices</label>
+            <div id="nodeEditorChoices" class="branch-choices-editor"></div>
+            <button class="settings-btn branch-add-choice-btn" id="addChoiceBtn">➕ <span data-i18n="addChoice">+ Add Choice</span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -145,7 +280,7 @@
         </div>
 
         <div class="settings-section about">
-          <p>ScriptPad v1.0.0</p>
+          <p>ScriptPad v1.1.0</p>
           <p class="text-muted">Your scripts. Always ready. One click away.</p>
         </div>
       </div>
@@ -246,6 +381,21 @@
     </div>
   </div>
 
+  <!-- Chrome API mock for browser preview -->
+  <script>
+    if (typeof chrome === 'undefined' || !chrome.storage) {
+      const _store = {};
+      window.chrome = { storage: { local: {
+        get(keys, cb) {
+          const result = {};
+          const keyList = Array.isArray(keys) ? keys : (typeof keys === 'string' ? [keys] : Object.keys(keys));
+          keyList.forEach(k => { if (_store[k] !== undefined) result[k] = JSON.parse(JSON.stringify(_store[k])); });
+          if (cb) cb(result);
+        },
+        set(data, cb) { Object.keys(data).forEach(k => _store[k] = JSON.parse(JSON.stringify(data[k]))); if (cb) cb(); }
+      }}};
+    }
+  </script>
   <script src="i18n.js"></script>
   <script src="search.js"></script>
   <script src="storage.js"></script>

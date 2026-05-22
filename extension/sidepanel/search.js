@@ -65,9 +65,25 @@ const SearchEngine = (() => {
     const results = scripts
       .map(script => {
         const titleScore = fuzzyScore(pattern, script.title) * 3; // Title weighted 3x
-        const bodyScore = fuzzyScore(pattern, stripHtml(script.body)) * 1;
         const tagScore = script.tags.reduce((max, tag) =>
           Math.max(max, fuzzyScore(pattern, tag)), 0) * 2; // Tags weighted 2x
+
+        let bodyScore = 0;
+        if (script.type === 'branching' && Array.isArray(script.nodes)) {
+          // Index all node labels and body text for branching scripts
+          script.nodes.forEach(node => {
+            bodyScore = Math.max(bodyScore, fuzzyScore(pattern, node.label) * 1.5);
+            bodyScore = Math.max(bodyScore, fuzzyScore(pattern, stripHtml(node.body)) * 1);
+            // Also search choice labels
+            if (Array.isArray(node.choices)) {
+              node.choices.forEach(c => {
+                bodyScore = Math.max(bodyScore, fuzzyScore(pattern, c.label) * 1);
+              });
+            }
+          });
+        } else {
+          bodyScore = fuzzyScore(pattern, stripHtml(script.body)) * 1;
+        }
 
         const totalScore = titleScore + bodyScore + tagScore;
 
