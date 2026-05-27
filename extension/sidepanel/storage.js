@@ -194,13 +194,15 @@ const StorageAPI = (() => {
   // ---- Seed Data ----
 
   // Add branching sample for users upgrading from v1.0
-  async function addBranchingSampleIfMissing(data) {
-    const hasBranching = data.scripts.some(s => s.type === 'branching');
+  async function addBranchingSampleIfMissing() {
+    // Re-read fresh from storage to avoid stale references
+    const freshData = await getAll();
+    const hasBranching = freshData.scripts.some(s => s.type === 'branching');
     if (hasBranching) return;
 
-    // Find or create an Openers folder
+    // Find an Openers folder if one exists
     let folderId = null;
-    const openersFolder = data.folders.find(f => f.name === 'Openers');
+    const openersFolder = freshData.folders.find(f => f.name === 'Openers');
     if (openersFolder) folderId = openersFolder.id;
 
     const n1 = uuid(), n2 = uuid(), n3 = uuid(), n4 = uuid(), n5 = uuid(), n6 = uuid();
@@ -259,15 +261,20 @@ const StorageAPI = (() => {
       updatedAt: new Date().toISOString()
     };
 
-    data.scripts.push(sample);
-    await saveAll({ scripts: data.scripts });
+    freshData.scripts.push(sample);
+    await saveAll({ scripts: freshData.scripts });
+    console.log('[ScriptPad] Added branching sample "Sales Qualification Flow"');
   }
 
   async function seedIfEmpty() {
     const data = await getAll();
     if (data.scripts.length > 0 || data.folders.length > 0) {
       // Check if we need to add the branching sample (v1.1 upgrade)
-      await addBranchingSampleIfMissing(data);
+      try {
+        await addBranchingSampleIfMissing();
+      } catch (e) {
+        console.error('[ScriptPad] Failed to add branching sample:', e);
+      }
       return false;
     }
 

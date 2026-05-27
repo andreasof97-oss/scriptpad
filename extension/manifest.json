@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScriptPad",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Your scripts. Always ready. One click away. Organize call scripts, objection handlers & quick-reference info.",
   "permissions": [
     "storage",
