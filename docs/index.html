@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScriptPad — Your Call Scripts, Always Ready</title>
+  <meta name="description" content="The #1 Chrome extension for call center agents. Organize scripts, decision trees, objection handlers — right alongside your dialer. Free & bilingual.">
+  <meta property="og:title" content="ScriptPad — Your Call Scripts, Always Ready">
+  <meta property="og:description" content="Organize call scripts, decision trees & objection handlers in a clean Chrome side panel. Free, private, bilingual (EN/ES).">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://andreasof97-oss.github.io/scriptpad/">
+  <link rel="icon" href="./icon48.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-card-hover: #263348;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.3);
+      --accent-hover: #2563eb;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #334155;
+      --green: #22c55e;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.25rem;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .nav-brand img { width: 32px; height: 32px; border-radius: 6px; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .lang-toggle {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .lang-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
+    .btn-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none; border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-cta:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-cta-large {
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    .btn-cta-large:hover { box-shadow: 0 0 40px var(--accent-glow); }
+
+    /* ---- SECTIONS ---- */
+    section { padding: 100px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-sub {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin-bottom: 48px;
+    }
+    .center { text-align: center; }
+    .center .section-sub { margin-left: auto; margin-right: auto; }
+
+    /* ---- HERO ---- */
+    .hero {
+      padding-top: 140px;
+      padding-bottom: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 60px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 700px;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin-bottom: 36px;
+    }
+    .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ---- MOCKUP ---- */
+    .mockup-wrapper {
+      margin-top: 64px;
+      width: 100%;
+      max-width: 380px;
+      perspective: 1000px;
+    }
+    .mockup {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
+      transform: rotateX(2deg);
+    }
+    .mockup-titlebar {
+      background: #1a2236;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-dot.r { background: #ef4444; }
+    .mockup-dot.y { background: #eab308; }
+    .mockup-dot.g { background: #22c55e; }
+    .mockup-body { padding: 16px; }
+    .mockup-search {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mockup-folder {
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text-secondary);
+      transition: background 0.15s;
+    }
+    .mockup-folder.active { background: rgba(59, 130, 246, 0.12); color: var(--accent); }
+    .mockup-script {
+      padding: 8px 12px 8px 32px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mockup-copy {
+      font-size: 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+    .mockup-pin { color: #eab308; font-size: 0.7rem; }
+    .mockup-new-badge {
+      background: var(--green);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+
+    /* ---- FEATURES GRID ---- */
+    .features-section { background: var(--bg-secondary); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: all 0.25s;
+      position: relative;
+    }
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .feature-icon { font-size: 1.8rem; margin-bottom: 14px; display: block; }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+    .new-badge {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: var(--green);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ---- HOW IT WORKS ---- */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      text-align: center;
+    }
+    .step-num {
+      width: 56px; height: 56px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 800; color: var(--accent);
+      margin: 0 auto 20px;
+    }
+    .step h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+    .step p { color: var(--text-secondary); font-size: 0.95rem; }
+
+    /* ---- BUILT FOR ---- */
+    .audience-section { background: var(--bg-secondary); }
+    .audience-grid {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center;
+    }
+    .audience-tag {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .audience-tag:hover { border-color: var(--accent); color: var(--text-primary); }
+
+    /* ---- PRIVACY ---- */
+    .privacy-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 48px;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .privacy-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+    .privacy-box h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
+    .privacy-box p { color: var(--text-secondary); font-size: 1.05rem; max-width: 480px; margin: 0 auto; }
+
+    /* ---- CTA BANNER ---- */
+    .cta-banner {
+      text-align: center;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      border-top: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-banner::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-banner > * { position: relative; z-index: 1; }
+    .cta-banner h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; margin-bottom: 12px; }
+    .cta-banner p { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 32px; }
+
+    /* ---- FOOTER ---- */
+    footer {
+      padding: 40px 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: var(--accent); }
+    .footer-links { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
+
+    /* ---- ANIMATIONS ---- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; gap: 32px; }
+      section { padding: 64px 20px; }
+      .hero { padding-top: 120px; padding-bottom: 48px; }
+      .privacy-box { padding: 32px 24px; }
+      .nav-cta-text { display: none; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <img src="./icon48.png" alt="ScriptPad icon">
+      ScriptPad
+    </a>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle" onclick="toggleLang()">ES 🌐</button>
+      <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta">
+        <span data-i18n="navCta">Add to Chrome</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    ⚡ <span data-i18n="heroBadge">Free Chrome Extension</span>
+  </div>
+  <h1 data-i18n="heroTitle">Your scripts. Always ready. One click away.</h1>
+  <p data-i18n="heroSub">The #1 script organizer for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.</p>
+  <div class="hero-buttons">
+    <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta btn-cta-large">
+      🌐 <span data-i18n="heroCta">Add to Chrome — It's Free</span>
+    </a>
+    <a href="#features" class="btn-secondary">
+      <span data-i18n="heroSecondary">See Features ↓</span>
+    </a>
+  </div>
+
+  <!-- MOCKUP -->
+  <div class="mockup-wrapper">
+    <div class="mockup">
+      <div class="mockup-titlebar">
+        <span class="mockup-dot r"></span>
+        <span class="mockup-dot y"></span>
+        <span class="mockup-dot g"></span>
+        <span style="margin-left:auto">ScriptPad</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-search">🔍 <span data-i18n="mockSearch">Search scripts...</span></div>
+        <div class="mockup-folder" style="color: #eab308;">📌 <span data-i18n="mockPinned">Pinned</span></div>
+        <div class="mockup-script"><span data-i18n="mockOpener">Opening Script</span> <span class="mockup-pin">⭐</span></div>
+        <div class="mockup-script"><span data-i18n="mockPrice">Price Objection</span> <span class="mockup-copy">Copy</span></div>
+        <div class="mockup-folder active">📁 <span data-i18n="mockBranching">Branching Flows</span><span class="mockup-new-badge">NEW</span></div>
+        <div class="mockup-script"><span data-i18n="mockQualify">Sales Qualification</span> <span class="mockup-copy">▶ Start</span></div>
+        <div class="mockup-folder">📁 <span data-i18n="mockObjections">Objection Handlers</span></div>
+        <div class="mockup-folder">📁 <span data-i18n="mockClosers">Closers</span></div>
+        <div class="mockup-folder">📁 <span data-i18n="mockFaqs">FAQs</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="container center">
+    <div class="reveal">
+      <p class="section-label" data-i18n="featLabel">Features</p>
+      <h2 class="section-title" data-i18n="featTitle">Everything you need on a live call</h2>
+      <p class="section-sub" data-i18n="featSub">Built by people who understand the phone never stops ringing.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <span class="new-badge">NEW</span>
+        <span class="feature-icon">🌳</span>
+        <h3 data-i18n="f1Title">Branching Scripts</h3>
+        <p data-i18n="f1Desc">Interactive decision trees that guide you step-by-step. Customer says X — you see what comes next. Perfect for qualification and troubleshooting.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📌</span>
+        <h3 data-i18n="f2Title">Instant Side Panel</h3>
+        <p data-i18n="f2Desc">Opens right alongside your dialer or CRM. No tab switching, no lost windows. Always visible when you need it.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📋</span>
+        <h3 data-i18n="f3Title">One-Click Copy</h3>
+        <p data-i18n="f3Desc">Copy any script to clipboard instantly. Paste into chat, email, or notes mid-call without missing a beat.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔍</span>
+        <h3 data-i18n="f4Title">Lightning-Fast Search</h3>
+        <p data-i18n="f4Desc">Fuzzy search across all scripts, titles, and tags. Type a few letters, find it instantly. Built for speed under pressure.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📁</span>
+        <h3 data-i18n="f5Title">Folders & Tags</h3>
+        <p data-i18n="f5Desc">Organize scripts your way — Openers, Objection Handlers, Closers, FAQs. Add tags for even faster filtering.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">⌨️</span>
+        <h3 data-i18n="f6Title">Keyboard Shortcuts</h3>
+        <p data-i18n="f6Desc">Ctrl+Shift+S to open. / to search. Arrow keys to navigate. Hands on keyboard, not fumbling with a mouse.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌙</span>
+        <h3 data-i18n="f7Title">Dark & Light Mode</h3>
+        <p data-i18n="f7Desc">Easy on the eyes during long shifts. Switch between dark and light themes anytime.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌐</span>
+        <h3 data-i18n="f8Title">Bilingual (EN/ES)</h3>
+        <p data-i18n="f8Desc">Full interface in English and Spanish. Auto-detects your browser language or toggle manually.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📥</span>
+        <h3 data-i18n="f9Title">Import & Export</h3>
+        <p data-i18n="f9Desc">Backup scripts as JSON. Move between computers. Share with teammates. Never lose a script again.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">⭐</span>
+        <h3 data-i18n="f10Title">Pin Favorites</h3>
+        <p data-i18n="f10Desc">Pin your most-used scripts to the top for instant access. Your go-to scripts, one click away.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">✏️</span>
+        <h3 data-i18n="f11Title">Rich Text Editor</h3>
+        <p data-i18n="f11Desc">Bold, italic, bullets, highlights. Format scripts exactly how you need them for quick scanning.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔒</span>
+        <h3 data-i18n="f12Title">100% Private</h3>
+        <p data-i18n="f12Desc">Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="container center">
+    <div class="reveal">
+      <p class="section-label" data-i18n="howLabel">How It Works</p>
+      <h2 class="section-title" data-i18n="howTitle">Ready in under a minute</h2>
+      <p class="section-sub" data-i18n="howSub">No sign-ups. No configuration. Just install and go.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h3 data-i18n="s1Title">Install</h3>
+        <p data-i18n="s1Desc">Add ScriptPad from the Chrome Web Store. One click, totally free.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <h3 data-i18n="s2Title">Add Your Scripts</h3>
+        <p data-i18n="s2Desc">Create scripts, organize them into folders, add tags. Import existing ones from JSON.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <h3 data-i18n="s3Title">Use on Live Calls</h3>
+        <p data-i18n="s3Desc">Open the side panel with Ctrl+Shift+S. Search, copy, and follow branching flows — all while you talk.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUILT FOR -->
+<section class="audience-section">
+  <div class="container center">
+    <div class="reveal">
+      <p class="section-label" data-i18n="forLabel">Built For</p>
+      <h2 class="section-title" data-i18n="forTitle">Anyone who works the phones</h2>
+      <p class="section-sub" data-i18n="forSub">If you talk to people for a living, ScriptPad is for you.</p>
+    </div>
+    <div class="audience-grid reveal">
+      <span class="audience-tag" data-i18n="a1">📞 Call Center Agents</span>
+      <span class="audience-tag" data-i18n="a2">📱 Telemarketers</span>
+      <span class="audience-tag" data-i18n="a3">🎯 Sales Reps (SDRs)</span>
+      <span class="audience-tag" data-i18n="a4">💬 Customer Service</span>
+      <span class="audience-tag" data-i18n="a5">🏥 Insurance Agents</span>
+      <span class="audience-tag" data-i18n="a6">🔧 Tech Support</span>
+      <span class="audience-tag" data-i18n="a7">🏠 Work From Home</span>
+      <span class="audience-tag" data-i18n="a8">🏢 In-Office Teams</span>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section>
+  <div class="container reveal">
+    <div class="privacy-box">
+      <span class="privacy-icon">🛡️</span>
+      <h2 data-i18n="privTitle">Your scripts stay on your device</h2>
+      <p data-i18n="privDesc">No accounts required. No data sent to servers. No tracking. ScriptPad stores everything locally in your browser. Your scripts are yours — period.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <h2 data-i18n="ctaTitle">Ready to stop fumbling mid-call?</h2>
+  <p data-i18n="ctaSub">Join thousands of agents who keep their scripts organized and ready.</p>
+  <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta btn-cta-large">
+    🌐 <span data-i18n="ctaCta">Add to Chrome — It's Free</span>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>Made with ⚡ by ScriptPad</div>
+  <div class="footer-links">
+    <a href="./privacy-policy.html">Privacy Policy</a>
+    <a href="https://github.com/andreasof97-oss/scriptpad" target="_blank">GitHub</a>
+    <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank">Chrome Web Store</a>
+  </div>
+</footer>
+
+<script>
+  // ---- i18n translations ----
+  const translations = {
+    en: {
+      navCta: 'Add to Chrome',
+      heroBadge: 'Free Chrome Extension',
+      heroTitle: 'Your scripts. Always ready. One click away.',
+      heroSub: 'The #1 script organizer for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.',
+      heroCta: "Add to Chrome — It's Free",
+      heroSecondary: 'See Features ↓',
+      mockSearch: 'Search scripts...',
+      mockPinned: 'Pinned',
+      mockOpener: 'Opening Script',
+      mockPrice: 'Price Objection',
+      mockBranching: 'Branching Flows',
+      mockQualify: 'Sales Qualification',
+      mockObjections: 'Objection Handlers',
+      mockClosers: 'Closers',
+      mockFaqs: 'FAQs',
+      featLabel: 'Features',
+      featTitle: 'Everything you need on a live call',
+      featSub: 'Built by people who understand the phone never stops ringing.',
+      f1Title: 'Branching Scripts', f1Desc: 'Interactive decision trees that guide you step-by-step. Customer says X — you see what comes next. Perfect for qualification and troubleshooting.',
+      f2Title: 'Instant Side Panel', f2Desc: 'Opens right alongside your dialer or CRM. No tab switching, no lost windows. Always visible when you need it.',
+      f3Title: 'One-Click Copy', f3Desc: 'Copy any script to clipboard instantly. Paste into chat, email, or notes mid-call without missing a beat.',
+      f4Title: 'Lightning-Fast Search', f4Desc: 'Fuzzy search across all scripts, titles, and tags. Type a few letters, find it instantly. Built for speed under pressure.',
+      f5Title: 'Folders & Tags', f5Desc: 'Organize scripts your way — Openers, Objection Handlers, Closers, FAQs. Add tags for even faster filtering.',
+      f6Title: 'Keyboard Shortcuts', f6Desc: 'Ctrl+Shift+S to open. / to search. Arrow keys to navigate. Hands on keyboard, not fumbling with a mouse.',
+      f7Title: 'Dark & Light Mode', f7Desc: 'Easy on the eyes during long shifts. Switch between dark and light themes anytime.',
+      f8Title: 'Bilingual (EN/ES)', f8Desc: 'Full interface in English and Spanish. Auto-detects your browser language or toggle manually.',
+      f9Title: 'Import & Export', f9Desc: 'Backup scripts as JSON. Move between computers. Share with teammates. Never lose a script again.',
+      f10Title: 'Pin Favorites', f10Desc: 'Pin your most-used scripts to the top for instant access. Your go-to scripts, one click away.',
+      f11Title: 'Rich Text Editor', f11Desc: 'Bold, italic, bullets, highlights. Format scripts exactly how you need them for quick scanning.',
+      f12Title: '100% Private', f12Desc: 'Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.',
+      howLabel: 'How It Works',
+      howTitle: 'Ready in under a minute',
+      howSub: 'No sign-ups. No configuration. Just install and go.',
+      s1Title: 'Install', s1Desc: 'Add ScriptPad from the Chrome Web Store. One click, totally free.',
+      s2Title: 'Add Your Scripts', s2Desc: 'Create scripts, organize them into folders, add tags. Import existing ones from JSON.',
+      s3Title: 'Use on Live Calls', s3Desc: 'Open the side panel with Ctrl+Shift+S. Search, copy, and follow branching flows — all while you talk.',
+      forLabel: 'Built For',
+      forTitle: 'Anyone who works the phones',
+      forSub: 'If you talk to people for a living, ScriptPad is for you.',
+      a1: '📞 Call Center Agents', a2: '📱 Telemarketers', a3: '🎯 Sales Reps (SDRs)', a4: '💬 Customer Service',
+      a5: '🏥 Insurance Agents', a6: '🔧 Tech Support', a7: '🏠 Work From Home', a8: '🏢 In-Office Teams',
+      privTitle: 'Your scripts stay on your device',
+      privDesc: 'No accounts required. No data sent to servers. No tracking. ScriptPad stores everything locally in your browser. Your scripts are yours — period.',
+      ctaTitle: 'Ready to stop fumbling mid-call?',
+      ctaSub: 'Join thousands of agents who keep their scripts organized and ready.',
+      ctaCta: "Add to Chrome — It's Free"
+    },
+    es: {
+      navCta: 'Agregar a Chrome',
+      heroBadge: 'Extensión de Chrome Gratis',
+      heroTitle: 'Tus guiones. Siempre listos. A un clic.',
+      heroSub: 'El organizador de guiones #1 para agentes de call center, telemarketers y representantes de ventas. Deja de buscar en Google Docs a media llamada — ScriptPad pone cada guión al alcance de tu mano.',
+      heroCta: 'Agregar a Chrome — Es Gratis',
+      heroSecondary: 'Ver Funciones ↓',
+      mockSearch: 'Buscar guiones...',
+      mockPinned: 'Fijados',
+      mockOpener: 'Guión de Apertura',
+      mockPrice: 'Objeción de Precio',
+      mockBranching: 'Flujos Ramificados',
+      mockQualify: 'Calificación de Ventas',
+      mockObjections: 'Manejo de Objeciones',
+      mockClosers: 'Cierres',
+      mockFaqs: 'Preguntas Frecuentes',
+      featLabel: 'Funciones',
+      featTitle: 'Todo lo que necesitas en una llamada en vivo',
+      featSub: 'Creado por personas que entienden que el teléfono no para de sonar.',
+      f1Title: 'Guiones Ramificados', f1Desc: 'Árboles de decisión interactivos que te guían paso a paso. El cliente dice X — tú ves qué sigue. Perfecto para calificación y resolución de problemas.',
+      f2Title: 'Panel Lateral Instantáneo', f2Desc: 'Se abre junto a tu marcador o CRM. Sin cambiar de pestaña, sin ventanas perdidas. Siempre visible cuando lo necesitas.',
+      f3Title: 'Copiar con Un Clic', f3Desc: 'Copia cualquier guión al portapapeles al instante. Pega en chat, correo o notas durante la llamada sin perder el ritmo.',
+      f4Title: 'Búsqueda Ultra Rápida', f4Desc: 'Búsqueda difusa en todos los guiones, títulos y etiquetas. Escribe unas letras, encuéntralo al instante.',
+      f5Title: 'Carpetas y Etiquetas', f5Desc: 'Organiza guiones a tu manera — Aperturas, Manejo de Objeciones, Cierres, FAQs. Agrega etiquetas para filtrar más rápido.',
+      f6Title: 'Atajos de Teclado', f6Desc: 'Ctrl+Shift+S para abrir. / para buscar. Flechas para navegar. Manos en el teclado, sin perder tiempo con el mouse.',
+      f7Title: 'Modo Oscuro y Claro', f7Desc: 'Fácil para los ojos durante turnos largos. Cambia entre temas oscuro y claro cuando quieras.',
+      f8Title: 'Bilingüe (EN/ES)', f8Desc: 'Interfaz completa en inglés y español. Detecta automáticamente el idioma de tu navegador o cambia manualmente.',
+      f9Title: 'Importar y Exportar', f9Desc: 'Respalda guiones como JSON. Muévelos entre computadoras. Comparte con compañeros. Nunca pierdas un guión.',
+      f10Title: 'Fijar Favoritos', f10Desc: 'Fija tus guiones más usados arriba para acceso instantáneo. Tus guiones favoritos, a un clic.',
+      f11Title: 'Editor de Texto Rico', f11Desc: 'Negrita, cursiva, viñetas, resaltado. Formatea guiones exactamente como los necesitas para escaneo rápido.',
+      f12Title: '100% Privado', f12Desc: 'Todo almacenado localmente en tu dispositivo. Sin cuentas, sin servidores, sin rastreo. Tus guiones son tuyos.',
+      howLabel: 'Cómo Funciona',
+      howTitle: 'Listo en menos de un minuto',
+      howSub: 'Sin registros. Sin configuración. Solo instala y listo.',
+      s1Title: 'Instala', s1Desc: 'Agrega ScriptPad desde la Chrome Web Store. Un clic, totalmente gratis.',
+      s2Title: 'Agrega Tus Guiones', s2Desc: 'Crea guiones, organízalos en carpetas, agrega etiquetas. Importa los que ya tienes desde JSON.',
+      s3Title: 'Usa en Llamadas en Vivo', s3Desc: 'Abre el panel lateral con Ctrl+Shift+S. Busca, copia y sigue flujos ramificados — todo mientras hablas.',
+      forLabel: 'Creado Para',
+      forTitle: 'Cualquiera que trabaje por teléfono',
+      forSub: 'Si hablas con personas para ganarte la vida, ScriptPad es para ti.',
+      a1: '📞 Agentes de Call Center', a2: '📱 Telemarketers', a3: '🎯 Representantes de Ventas', a4: '💬 Servicio al Cliente',
+      a5: '🏥 Agentes de Seguros', a6: '🔧 Soporte Técnico', a7: '🏠 Trabajo Desde Casa', a8: '🏢 Equipos en Oficina',
+      privTitle: 'Tus guiones se quedan en tu dispositivo',
+      privDesc: 'Sin cuentas requeridas. Sin datos enviados a servidores. Sin rastreo. ScriptPad almacena todo localmente en tu navegador. Tus guiones son tuyos — punto.',
+      ctaTitle: '¿Listo para dejar de improvisar a media llamada?',
+      ctaSub: 'Únete a miles de agentes que mantienen sus guiones organizados y listos.',
+      ctaCta: 'Agregar a Chrome — Es Gratis'
+    }
+  };
+
+  let currentLang = localStorage.getItem('sp-lang') || 'en';
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('sp-lang', lang);
+    document.documentElement.lang = lang;
+    document.getElementById('langToggle').textContent = lang === 'en' ? 'ES 🌐' : 'EN 🌐';
+    const t = translations[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+  }
+
+  function toggleLang() {
+    setLang(currentLang === 'en' ? 'es' : 'en');
+  }
+
+  // Init language
+  setLang(currentLang);
+
+  // ---- Scroll reveal ----
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
