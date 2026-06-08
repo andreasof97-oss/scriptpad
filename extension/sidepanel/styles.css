@@ -315,9 +315,11 @@ body {
   border-top: 1px solid var(--border);
   background: var(--bg-secondary);
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
 }
 .add-btn {
-  width: 100%;
+  flex: 1;
   padding: 10px;
   background: var(--accent);
   color: white;
@@ -331,6 +333,16 @@ body {
 }
 .add-btn:hover {
   background: var(--accent-hover);
+}
+.add-btn-secondary {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.add-btn-secondary:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent);
 }
 
 /* ===== SCRIPT DETAIL VIEW ===== */

@@ -44,6 +44,7 @@
     themeBtn: $('#themeBtn'),
     settingsBtn: $('#settingsBtn'),
     newScriptBtn: $('#newScriptBtn'),
+    newFolderBtnMain: $('#newFolderBtnMain'),
     // Script view
     backBtn: $('#backBtn'),
     scriptViewTitle: $('#scriptViewTitle'),
@@ -1157,6 +1158,7 @@
     });
     els.settingsBtn.addEventListener('click', openSettings);
     els.newScriptBtn.addEventListener('click', () => showTypeChooser());
+    els.newFolderBtnMain.addEventListener('click', createNewFolder);
 
     // Script view
     els.backBtn.addEventListener('click', () => { showView('main'); renderMain(); });
