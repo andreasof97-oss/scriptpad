@@ -13,14 +13,20 @@ const StorageAPI = (() => {
       });
   }
 
+  // ---- Constants ----
+  const FREE_NOTE_LIMIT = 15;
+  const FREE_SCRIPT_LIMIT = 15;
+  const FREE_FOLDER_LIMIT = 5;
+
   // ---- Generic helpers ----
 
   async function getAll() {
     return new Promise((resolve) => {
-      storage.get(['folders', 'scripts', 'settings'], (data) => {
+      storage.get(['folders', 'scripts', 'settings', 'notes'], (data) => {
         resolve({
           folders: data.folders || [],
           scripts: data.scripts || [],
+          notes: data.notes || [],
           settings: data.settings || { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' }
         });
       });
@@ -146,6 +152,68 @@ const StorageAPI = (() => {
     return data.settings;
   }
 
+  // ---- Notes ----
+
+  function generateNoteTitle(body, existingNotes) {
+    if (body && body.trim()) {
+      const firstLine = body.trim().split('\n')[0].trim();
+      if (firstLine) {
+        return firstLine.length > 50 ? firstLine.substring(0, 50) + '…' : firstLine;
+      }
+    }
+    const num = (existingNotes || []).length + 1;
+    return `Note #${num}`;
+  }
+
+  async function getNotes() {
+    const data = await getAll();
+    return data.notes;
+  }
+
+  async function getNote(id) {
+    const notes = await getNotes();
+    return notes.find(n => n.id === id) || null;
+  }
+
+  async function createNote({ body }) {
+    const data = await getAll();
+    const now = new Date().toISOString();
+    const note = {
+      id: uuid(),
+      title: generateNoteTitle(body, data.notes),
+      body: body || '',
+      createdAt: now,
+      updatedAt: now
+    };
+    data.notes.push(note);
+    await saveAll({ notes: data.notes });
+    return note;
+  }
+
+  async function updateNote(id, { body }) {
+    const data = await getAll();
+    const idx = data.notes.findIndex(n => n.id === id);
+    if (idx === -1) return null;
+    if (body !== undefined) {
+      data.notes[idx].body = body;
+      data.notes[idx].title = generateNoteTitle(body, data.notes);
+    }
+    data.notes[idx].updatedAt = new Date().toISOString();
+    await saveAll({ notes: data.notes });
+    return data.notes[idx];
+  }
+
+  async function deleteNote(id) {
+    const data = await getAll();
+    data.notes = data.notes.filter(n => n.id !== id);
+    await saveAll({ notes: data.notes });
+  }
+
+  async function getNotesCount() {
+    const notes = await getNotes();
+    return notes.length;
+  }
+
   // ---- Import / Export ----
 
   async function exportData() {
@@ -181,6 +249,13 @@ const StorageAPI = (() => {
           }
           return base;
         }),
+        notes: Array.isArray(data.notes) ? data.notes.map(n => ({
+          id: n.id || uuid(),
+          title: n.title || '',
+          body: n.body || '',
+          createdAt: n.createdAt || new Date().toISOString(),
+          updatedAt: n.updatedAt || new Date().toISOString()
+        })) : [],
         settings: data.settings || { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' }
       };
       await saveAll(sanitized);
@@ -407,6 +482,9 @@ const StorageAPI = (() => {
   }
 
   return {
+    FREE_NOTE_LIMIT,
+    FREE_SCRIPT_LIMIT,
+    FREE_FOLDER_LIMIT,
     getAll,
     getScripts,
     getScript,
@@ -418,6 +496,12 @@ const StorageAPI = (() => {
     createFolder,
     renameFolder,
     deleteFolder,
+    getNotes,
+    getNote,
+    createNote,
+    updateNote,
+    deleteNote,
+    getNotesCount,
     getSettings,
     updateSettings,
     exportData,

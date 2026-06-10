@@ -2,9 +2,14 @@
 
 const SearchEngine = (() => {
   let scripts = [];
+  let notes = [];
 
   function setScripts(allScripts) {
     scripts = allScripts;
+  }
+
+  function setNotes(allNotes) {
+    notes = allNotes;
   }
 
   // Simple fuzzy match — checks if all characters of the pattern appear in order in the text
@@ -96,5 +101,24 @@ const SearchEngine = (() => {
     return results;
   }
 
-  return { setScripts, search };
+  function searchNotes(query) {
+    if (!query || query.trim() === '') return notes;
+
+    const pattern = query.trim();
+
+    const results = notes
+      .map(note => {
+        const titleScore = fuzzyScore(pattern, note.title) * 3;
+        const bodyScore = fuzzyScore(pattern, note.body) * 1;
+        const totalScore = titleScore + bodyScore;
+        return { note, score: totalScore, type: 'note' };
+      })
+      .filter(r => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(r => ({ ...r.note, _type: 'note' }));
+
+    return results;
+  }
+
+  return { setScripts, setNotes, search, searchNotes };
 })();

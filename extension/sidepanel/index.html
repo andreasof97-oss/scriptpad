@@ -29,13 +29,47 @@
         </div>
       </div>
 
+      <!-- Tab Bar -->
+      <div class="tab-bar" id="tabBar">
+        <button class="tab-btn active" id="scriptsTab" data-tab="scripts">📄 <span data-i18n="scriptsTab">Scripts</span></button>
+        <button class="tab-btn" id="notesTab" data-tab="notes">📝 <span data-i18n="notesTab">Notes</span></button>
+      </div>
+
+      <!-- Scripts content -->
       <div class="panel-content" id="panelContent">
         <!-- Dynamic content rendered by JS -->
       </div>
 
-      <div class="panel-footer">
+      <!-- Notes content -->
+      <div class="panel-content" id="notesContent" style="display:none">
+        <!-- Notes count -->
+        <div class="notes-count-bar" id="notesCountBar"></div>
+        <!-- Upgrade banner -->
+        <div class="notes-limit-banner" id="notesLimitBanner" style="display:none">
+          <span class="notes-limit-icon">🔒</span>
+          <div class="notes-limit-text">
+            <strong id="notesLimitTitle">Note limit reached</strong>
+            <span id="notesLimitHint">Upgrade to Pro for unlimited notes</span>
+          </div>
+        </div>
+        <!-- Quick add -->
+        <div class="quick-note-area" id="quickNoteArea">
+          <textarea class="quick-note-input" id="quickNoteInput" placeholder="Quick note..." rows="2"></textarea>
+          <button class="quick-note-save" id="quickNoteSave">💾</button>
+        </div>
+        <!-- Notes list -->
+        <div id="notesList"></div>
+      </div>
+
+      <!-- Scripts footer -->
+      <div class="panel-footer" id="scriptsFooter">
         <button class="add-btn" id="newScriptBtn">+ New Script</button>
         <button class="add-btn add-btn-secondary" id="newFolderBtnMain">📁 <span data-i18n="newFolder">New Folder</span></button>
+      </div>
+
+      <!-- Notes footer -->
+      <div class="panel-footer" id="notesFooter" style="display:none">
+        <button class="add-btn" id="newNoteBtnFooter">📝 <span data-i18n="newNote">+ New Note</span></button>
       </div>
     </div>
 
@@ -238,6 +272,33 @@
       </header>
 
       <div class="settings-content">
+        <!-- Account Section -->
+        <div class="settings-section account-section" id="accountSection">
+          <h3 data-i18n="account">Account</h3>
+          <!-- Signed out state -->
+          <div id="accountSignedOut" class="account-card">
+            <div class="account-card-icon">👤</div>
+            <div class="account-card-info">
+              <p class="account-card-title" data-i18n="signInForPro">Sign in to unlock Pro</p>
+              <p class="account-card-hint" data-i18n="upgradeProHint">Unlimited scripts, folders, notes, cloud sync & more</p>
+            </div>
+            <button class="settings-btn accent-btn" id="signInBtn">🔑 <span data-i18n="signIn">Sign In</span></button>
+          </div>
+          <!-- Signed in state -->
+          <div id="accountSignedIn" class="account-card" style="display:none">
+            <div class="account-card-icon">✅</div>
+            <div class="account-card-info">
+              <p class="account-card-email" id="accountEmail"></p>
+              <p class="account-card-plan" id="accountPlan"></p>
+            </div>
+            <button class="settings-btn" id="signOutBtn">🚪 <span data-i18n="signOut">Sign Out</span></button>
+          </div>
+          <!-- Upgrade CTA (visible when signed in on free plan) -->
+          <div id="upgradeCtaSettings" class="upgrade-cta" style="display:none">
+            <button class="upgrade-btn" id="upgradeFromSettings">⚡ <span data-i18n="upgradeToPro">Upgrade to Pro</span></button>
+          </div>
+        </div>
+
         <div class="settings-section">
           <h3 data-i18n="theme">Theme</h3>
           <div class="settings-row">
@@ -281,9 +342,84 @@
         </div>
 
         <div class="settings-section about">
-          <p>ScriptPad v1.1.0</p>
+          <p>ScriptPad v1.3.0</p>
           <p class="text-muted">Your scripts. Always ready. One click away.</p>
         </div>
+      </div>
+    </div>
+
+    <!-- SIGN IN VIEW -->
+    <div id="signInView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="signInBackBtn">←</button>
+        <h2 class="editor-title" data-i18n="signIn">Sign In</h2>
+      </header>
+      <div class="auth-content">
+        <div class="auth-logo">⚡</div>
+        <h2 class="auth-title" data-i18n="signInTitle">Sign in to ScriptPad</h2>
+        <p class="auth-subtitle" data-i18n="signInSubtitle">Unlock Pro features and sync your scripts across devices.</p>
+        <div class="auth-form">
+          <div class="form-group">
+            <label data-i18n="email">Email</label>
+            <input type="email" id="authEmailInput" class="form-input" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label data-i18n="password">Password</label>
+            <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••">
+          </div>
+          <div class="auth-error" id="authError" style="display:none"></div>
+          <button class="upgrade-btn auth-submit-btn" id="authSubmitBtn">🔑 <span data-i18n="signIn">Sign In</span></button>
+          <div class="auth-toggle">
+            <span data-i18n="noAccount">Don't have an account?</span>
+            <a href="#" id="authToggleLink" data-i18n="createAccount">Create one</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPGRADE VIEW -->
+    <div id="upgradeView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="upgradeBackBtn">←</button>
+        <h2 class="editor-title" data-i18n="upgradeToPro">Upgrade to Pro ⚡</h2>
+      </header>
+      <div class="upgrade-content">
+        <div class="upgrade-hero">
+          <div class="upgrade-hero-icon">⚡</div>
+          <h2 class="upgrade-hero-title" data-i18n="proTitle">ScriptPad Pro</h2>
+          <p class="upgrade-hero-price">$6<span class="upgrade-price-period" data-i18n="perMonth">/mo</span></p>
+          <p class="upgrade-hero-annual" data-i18n="orAnnual">or $49/year (save 32%)</p>
+        </div>
+        <div class="upgrade-features">
+          <div class="upgrade-feature"><span>♾️</span><span data-i18n="proFeature1">Unlimited scripts, folders & notes</span></div>
+          <div class="upgrade-feature"><span>☁️</span><span data-i18n="proFeature2">Cloud sync across devices</span></div>
+          <div class="upgrade-feature"><span>📊</span><span data-i18n="proFeature3">Call tracker & statistics</span></div>
+          <div class="upgrade-feature"><span>🔥</span><span data-i18n="proFeature4">Script usage analytics</span></div>
+          <div class="upgrade-feature"><span>⌨️</span><span data-i18n="proFeature5">Custom keyboard shortcuts</span></div>
+          <div class="upgrade-feature"><span>🆘</span><span data-i18n="proFeature6">Priority support</span></div>
+        </div>
+        <div class="upgrade-actions">
+          <button class="upgrade-btn" id="subscribeMonthlyBtn">$6/mo — <span data-i18n="subscribeMonthly">Subscribe Monthly</span></button>
+          <button class="upgrade-btn upgrade-btn-annual" id="subscribeAnnualBtn">$49/yr — <span data-i18n="subscribeAnnual">Subscribe Annually</span></button>
+        </div>
+        <p class="upgrade-footer-note" data-i18n="upgradeFooter">Cancel anytime. Secure payment via PayPal.</p>
+      </div>
+    </div>
+
+    <!-- NOTE DETAIL VIEW -->
+    <div id="noteView" class="view">
+      <header class="script-view-header">
+        <button class="back-btn" id="noteBackBtn">←</button>
+        <h2 class="script-view-title" id="noteViewTitle"></h2>
+        <button class="copy-all-btn" id="copyNoteBtn">📋 <span data-i18n="copyNote">Copy</span></button>
+      </header>
+
+      <div class="note-detail-body">
+        <textarea class="note-edit-textarea" id="noteEditTextarea" placeholder="Write your note..."></textarea>
+      </div>
+
+      <div class="script-view-footer">
+        <button class="footer-btn danger" id="deleteNoteBtn">🗑️ <span data-i18n="delete">Delete</span></button>
       </div>
     </div>
 
@@ -391,12 +527,16 @@
           const result = {};
           const keyList = Array.isArray(keys) ? keys : (typeof keys === 'string' ? [keys] : Object.keys(keys));
           keyList.forEach(k => { if (_store[k] !== undefined) result[k] = JSON.parse(JSON.stringify(_store[k])); });
-          if (cb) cb(result);
+          if (cb) cb(result); return Promise.resolve(result);
         },
-        set(data, cb) { Object.keys(data).forEach(k => _store[k] = JSON.parse(JSON.stringify(data[k]))); if (cb) cb(); }
+        set(data, cb) { Object.keys(data).forEach(k => _store[k] = JSON.parse(JSON.stringify(data[k]))); if (cb) cb(); return Promise.resolve(); },
+        remove(keys, cb) { const keyList = Array.isArray(keys) ? keys : [keys]; keyList.forEach(k => delete _store[k]); if (cb) cb(); return Promise.resolve(); }
       }}};
     }
   </script>
+  <script src="config.js"></script>
+  <script src="supabase.min.js"></script>
+  <script src="auth.js"></script>
   <script src="i18n.js"></script>
   <script src="search.js"></script>
   <script src="storage.js"></script>

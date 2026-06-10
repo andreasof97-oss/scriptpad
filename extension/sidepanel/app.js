@@ -7,9 +7,12 @@
   let state = {
     scripts: [],
     folders: [],
+    notes: [],
     settings: { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' },
     currentView: 'main',
+    activeTab: 'scripts', // 'scripts' or 'notes'
     currentScriptId: null,
+    currentNoteId: null,
     editingScriptId: null, // null = new, string = editing existing
     selectedIndex: -1,
     searchQuery: '',
@@ -19,7 +22,11 @@
     // Branching editor state
     branchingEditorNodes: [],
     branchingEditorStartNodeId: null,
-    selectedNodeId: null
+    selectedNodeId: null,
+    // Account state
+    user: null,       // { email, id } or null
+    plan: 'free',     // 'free' or 'pro'
+    authMode: 'signin' // 'signin' or 'signup'
   };
 
   // ---- DOM Refs ----
@@ -34,7 +41,10 @@
     folder: $('#folderView'),
     branching: $('#branchingView'),
     typeChooser: $('#typeChooserView'),
-    branchingEditor: $('#branchingEditorView')
+    branchingEditor: $('#branchingEditorView'),
+    note: $('#noteView'),
+    signIn: $('#signInView'),
+    upgrade: $('#upgradeView')
   };
 
   const els = {
@@ -114,6 +124,49 @@
     nodeEditorBody: $('#nodeEditorBody'),
     nodeEditorChoices: $('#nodeEditorChoices'),
     addChoiceBtn: $('#addChoiceBtn'),
+    // Tabs
+    tabBar: $('#tabBar'),
+    scriptsTab: $('#scriptsTab'),
+    notesTab: $('#notesTab'),
+    notesContent: $('#notesContent'),
+    notesCountBar: $('#notesCountBar'),
+    notesLimitBanner: $('#notesLimitBanner'),
+    notesLimitTitle: $('#notesLimitTitle'),
+    notesLimitHint: $('#notesLimitHint'),
+    quickNoteInput: $('#quickNoteInput'),
+    quickNoteSave: $('#quickNoteSave'),
+    quickNoteArea: $('#quickNoteArea'),
+    notesList: $('#notesList'),
+    scriptsFooter: $('#scriptsFooter'),
+    notesFooter: $('#notesFooter'),
+    newNoteBtnFooter: $('#newNoteBtnFooter'),
+    // Note detail
+    noteBackBtn: $('#noteBackBtn'),
+    noteViewTitle: $('#noteViewTitle'),
+    copyNoteBtn: $('#copyNoteBtn'),
+    noteEditTextarea: $('#noteEditTextarea'),
+    deleteNoteBtn: $('#deleteNoteBtn'),
+    // Account & Auth
+    accountSection: $('#accountSection'),
+    accountSignedOut: $('#accountSignedOut'),
+    accountSignedIn: $('#accountSignedIn'),
+    accountEmail: $('#accountEmail'),
+    accountPlan: $('#accountPlan'),
+    signInBtn: $('#signInBtn'),
+    signOutBtn: $('#signOutBtn'),
+    upgradeCtaSettings: $('#upgradeCtaSettings'),
+    upgradeFromSettings: $('#upgradeFromSettings'),
+    // Sign In view
+    signInBackBtn: $('#signInBackBtn'),
+    authEmailInput: $('#authEmailInput'),
+    authPasswordInput: $('#authPasswordInput'),
+    authError: $('#authError'),
+    authSubmitBtn: $('#authSubmitBtn'),
+    authToggleLink: $('#authToggleLink'),
+    // Upgrade view
+    upgradeBackBtn: $('#upgradeBackBtn'),
+    subscribeMonthlyBtn: $('#subscribeMonthlyBtn'),
+    subscribeAnnualBtn: $('#subscribeAnnualBtn'),
     // Toast & confirm
     toast: $('#toast'),
     overlay: $('#overlay'),
@@ -232,16 +285,30 @@
     updateLangBtn();
     updateI18n();
     bindEvents();
+    // Restore last active tab
+    restoreActiveTab();
+    loadAccountState();
     renderMain();
     initOnboarding();
+  }
+
+  function restoreActiveTab() {
+    chrome.storage.local.get(['activeTab'], (data) => {
+      if (data.activeTab === 'notes') {
+        state.activeTab = 'notes';
+        switchTab('notes');
+      }
+    });
   }
 
   async function loadData() {
     const data = await StorageAPI.getAll();
     state.scripts = data.scripts;
     state.folders = data.folders;
+    state.notes = data.notes;
     state.settings = data.settings;
     SearchEngine.setScripts(state.scripts);
+    SearchEngine.setNotes(state.notes);
   }
 
   // ---- Views ----
@@ -251,14 +318,88 @@
     state.currentView = name;
   }
 
+  // ---- Tab Switching ----
+  function switchTab(tab) {
+    state.activeTab = tab;
+    state.searchQuery = '';
+    els.searchInput.value = '';
+
+    // Update tab buttons
+    els.scriptsTab.classList.toggle('active', tab === 'scripts');
+    els.notesTab.classList.toggle('active', tab === 'notes');
+
+    // Toggle content visibility
+    els.panelContent.style.display = tab === 'scripts' ? '' : 'none';
+    els.notesContent.style.display = tab === 'notes' ? '' : 'none';
+    els.scriptsFooter.style.display = tab === 'scripts' ? '' : 'none';
+    els.notesFooter.style.display = tab === 'notes' ? '' : 'none';
+
+    // Update search placeholder
+    els.searchInput.placeholder = tab === 'scripts' ? t('searchPlaceholder') : t('searchNotesPlaceholder');
+
+    // Persist tab choice
+    chrome.storage.local.set({ activeTab: tab });
+
+    if (tab === 'notes') {
+      renderNotes();
+    } else {
+      renderMain();
+    }
+  }
+
   // ---- Render: Main List ----
   function renderMain() {
     const content = els.panelContent;
     content.innerHTML = '';
 
+    // Scripts & folders count bar
+    const scriptCount = state.scripts.length;
+    const folderCount = state.folders.length;
+    const scriptLimit = getEffectiveScriptLimit();
+    const folderLimit = getEffectiveFolderLimit();
+    const atScriptLimit = !isPro() && scriptCount >= scriptLimit;
+    const atFolderLimit = !isPro() && folderCount >= folderLimit;
+
+    // Show limit bar (only for free tier)
+    if (!isPro()) {
+      const limitsBar = document.createElement('div');
+      limitsBar.className = 'limits-bar';
+      limitsBar.innerHTML = `<span>${scriptCount}/${StorageAPI.FREE_SCRIPT_LIMIT} ${t('scriptsCount')}</span><span>${folderCount}/${StorageAPI.FREE_FOLDER_LIMIT} ${t('foldersCount')}</span>`;
+      content.appendChild(limitsBar);
+    }
+
+    // Show limit warning banner if either is at limit
+    if (atScriptLimit || atFolderLimit) {
+      const banner = document.createElement('div');
+      banner.className = 'notes-limit-banner clickable-banner';
+      const msg = atScriptLimit ? t('scriptLimitReached') : t('folderLimitReached');
+      const hint = t('upgradeToPro');
+      banner.innerHTML = `<span class="notes-limit-icon">🔒</span><div class="notes-limit-text"><strong>${msg}</strong><span>${hint}</span></div>`;
+      banner.addEventListener('click', openUpgrade);
+      content.appendChild(banner);
+    }
+
+    // Update footer button states
+    els.newScriptBtn.disabled = atScriptLimit;
+    els.newFolderBtnMain.disabled = atFolderLimit;
+    if (atScriptLimit) {
+      els.newScriptBtn.title = t('scriptLimitWarning');
+    } else {
+      els.newScriptBtn.title = '';
+    }
+    if (atFolderLimit) {
+      els.newFolderBtnMain.title = t('folderLimitWarning');
+    } else {
+      els.newFolderBtnMain.title = '';
+    }
+
     let displayScripts;
 
     if (state.searchQuery) {
+      if (state.activeTab === 'notes') {
+        renderNotes();
+        return;
+      }
       displayScripts = SearchEngine.search(state.searchQuery);
       content.innerHTML = `<div class="section-label">🔍 ${t('searchResults')} (${displayScripts.length})</div>`;
       if (displayScripts.length === 0) {
@@ -348,6 +489,339 @@
       <div class="empty-title">${title}</div>
       <div class="empty-hint">${hint}</div>
     </div>`;
+  }
+
+  // ---- Render: Notes List ----
+  function renderNotes() {
+    const list = els.notesList;
+    list.innerHTML = '';
+
+    const noteCount = state.notes.length;
+    const noteLimit = getEffectiveNoteLimit();
+    const atLimit = !isPro() && noteCount >= noteLimit;
+
+    // Count bar (only for free tier)
+    if (!isPro()) {
+      els.notesCountBar.textContent = `${noteCount}/${StorageAPI.FREE_NOTE_LIMIT} ${t('notesCount')}`;
+      els.notesCountBar.style.display = '';
+    } else {
+      els.notesCountBar.style.display = 'none';
+    }
+
+    // Limit banner
+    if (atLimit) {
+      els.notesLimitBanner.style.display = 'flex';
+      els.notesLimitTitle.textContent = t('notesLimitReached');
+      els.notesLimitHint.textContent = t('upgradeToProNotes');
+    } else {
+      els.notesLimitBanner.style.display = 'none';
+    }
+
+    // Quick-add area: disable if at limit
+    els.quickNoteInput.disabled = atLimit;
+    els.quickNoteSave.disabled = atLimit;
+    if (atLimit) {
+      els.quickNoteInput.placeholder = t('noteLimitWarning');
+    } else {
+      els.quickNoteInput.placeholder = t('quickNotePlaceholder');
+    }
+
+    // Sort by most recent
+    let displayNotes = [...state.notes].sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+
+    // Filter by search if active
+    if (state.searchQuery) {
+      displayNotes = SearchEngine.searchNotes(state.searchQuery);
+      if (displayNotes.length === 0) {
+        list.innerHTML = renderEmptyState('🔍', t('noResults'), t('noResultsHint'));
+        return;
+      }
+    }
+
+    if (displayNotes.length === 0) {
+      list.innerHTML = renderEmptyState('📝', t('noNotes'), t('noNotesHint'));
+      return;
+    }
+
+    displayNotes.forEach(note => list.appendChild(createNoteItem(note)));
+  }
+
+  function createNoteItem(note) {
+    const div = document.createElement('div');
+    div.className = 'note-item';
+    div.dataset.id = note.id;
+
+    const lines = (note.body || '').split('\n').filter(l => l.trim());
+    const title = note.title || t('noteTitle');
+    const preview = lines.length > 1 ? lines[1].trim() : '';
+    const timeStr = timeAgo(note.updatedAt);
+
+    div.innerHTML = `
+      <div class="note-info">
+        <div class="note-title">${esc(title)}</div>
+        ${preview ? `<div class="note-preview">${esc(preview)}</div>` : ''}
+        <div class="note-meta">${t('updatedAgo')} ${timeStr}</div>
+      </div>
+      <button class="note-copy-btn" title="${t('copy')}">📋</button>
+    `;
+
+    div.addEventListener('click', (e) => {
+      if (e.target.closest('.note-copy-btn')) return;
+      openNote(note.id);
+    });
+    div.querySelector('.note-copy-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyToClipboard(note.body || '');
+    });
+
+    return div;
+  }
+
+  // ---- Note Detail ----
+  function openNote(noteId) {
+    const note = state.notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    state.currentNoteId = noteId;
+    els.noteViewTitle.textContent = note.title || t('noteTitle');
+    els.noteEditTextarea.value = note.body || '';
+
+    showView('note');
+    els.noteEditTextarea.focus();
+  }
+
+  let noteAutoSaveTimer = null;
+  function handleNoteAutoSave() {
+    if (noteAutoSaveTimer) clearTimeout(noteAutoSaveTimer);
+    noteAutoSaveTimer = setTimeout(async () => {
+      if (!state.currentNoteId) return;
+      const body = els.noteEditTextarea.value;
+      const updated = await StorageAPI.updateNote(state.currentNoteId, { body });
+      if (updated) {
+        els.noteViewTitle.textContent = updated.title;
+        await loadData();
+      }
+    }, 800);
+  }
+
+  async function quickAddNote() {
+    const body = els.quickNoteInput.value.trim();
+    if (!body) return;
+    if (!isPro() && state.notes.length >= StorageAPI.FREE_NOTE_LIMIT) {
+      showToast(t('noteLimitWarning'));
+      return;
+    }
+    await StorageAPI.createNote({ body });
+    els.quickNoteInput.value = '';
+    await loadData();
+    renderNotes();
+    showToast(t('notesSaved'));
+  }
+
+  function deleteCurrentNote() {
+    if (!state.currentNoteId) return;
+    showConfirm(t('deleteNoteConfirm'), t('deleteConfirmText'), async () => {
+      await StorageAPI.deleteNote(state.currentNoteId);
+      state.currentNoteId = null;
+      await loadData();
+      showView('main');
+      switchTab('notes');
+      showToast(t('noteDeleted'));
+    });
+  }
+
+  function copyCurrentNote() {
+    const body = els.noteEditTextarea.value || '';
+    copyToClipboard(body);
+  }
+
+  // ---- Account & Auth ----
+  function isPro() {
+    return state.plan === 'pro';
+  }
+
+  function getEffectiveScriptLimit() {
+    return isPro() ? Infinity : StorageAPI.FREE_SCRIPT_LIMIT;
+  }
+
+  function getEffectiveFolderLimit() {
+    return isPro() ? Infinity : StorageAPI.FREE_FOLDER_LIMIT;
+  }
+
+  function getEffectiveNoteLimit() {
+    return isPro() ? Infinity : StorageAPI.FREE_NOTE_LIMIT;
+  }
+
+  function loadAccountState() {
+    // Initialize Auth module with callback for state changes
+    Auth.init(({ user, plan }) => {
+      state.user = user;
+      state.plan = plan;
+      updateAccountUI();
+      // Re-render current view to reflect plan changes
+      if (state.currentView === 'main') {
+        if (state.activeTab === 'notes') renderNotes();
+        else renderMain();
+      }
+    });
+  }
+
+  function updateAccountUI() {
+    if (state.user) {
+      els.accountSignedOut.style.display = 'none';
+      els.accountSignedIn.style.display = 'flex';
+      els.accountEmail.textContent = state.user.email;
+      els.accountPlan.textContent = isPro() ? t('proPlan') : t('freePlan');
+      els.upgradeCtaSettings.style.display = isPro() ? 'none' : 'block';
+    } else {
+      els.accountSignedOut.style.display = 'flex';
+      els.accountSignedIn.style.display = 'none';
+      els.upgradeCtaSettings.style.display = 'none';
+    }
+  }
+
+  function openSignIn() {
+    state.authMode = 'signin';
+    els.authEmailInput.value = '';
+    els.authPasswordInput.value = '';
+    els.authError.style.display = 'none';
+    updateAuthUI();
+    showView('signIn');
+    els.authEmailInput.focus();
+  }
+
+  function updateAuthUI() {
+    const isSignup = state.authMode === 'signup';
+    const titleEl = els.signInBackBtn.parentElement.querySelector('.editor-title');
+    if (titleEl) titleEl.textContent = isSignup ? t('createAccountTitle') : t('signInTitle');
+    const submitSpan = els.authSubmitBtn.querySelector('span');
+    if (submitSpan) submitSpan.textContent = isSignup ? t('createAccount') : t('signIn');
+    const toggleLink = els.authToggleLink;
+    const toggleText = toggleLink.previousElementSibling;
+    if (toggleText) toggleText.textContent = isSignup ? t('haveAccount') : t('noAccount');
+    toggleLink.textContent = isSignup ? t('signInLink') : t('createAccount');
+  }
+
+  function showAuthError(msg) {
+    els.authError.textContent = msg;
+    els.authError.style.display = 'block';
+  }
+
+  async function handleAuth() {
+    const email = els.authEmailInput.value.trim();
+    const password = els.authPasswordInput.value;
+
+    // Validate
+    if (!email || !email.includes('@')) {
+      showAuthError(t('authErrorEmail'));
+      return;
+    }
+    if (!password || password.length < 6) {
+      showAuthError(t('authErrorPassword'));
+      return;
+    }
+
+    els.authError.style.display = 'none';
+    const submitSpan = els.authSubmitBtn.querySelector('span');
+    const originalText = submitSpan.textContent;
+    submitSpan.textContent = state.authMode === 'signup' ? t('creatingAccount') : t('signingIn');
+    els.authSubmitBtn.disabled = true;
+
+    try {
+      if (state.authMode === 'signup') {
+        await Auth.signUp(email, password);
+      } else {
+        await Auth.signIn(email, password);
+      }
+
+      showView('settings');
+      showToast(t('signIn') + ' ✓');
+    } catch (err) {
+      console.error('[ScriptPad] Auth error:', err);
+      if (err.message && err.message.includes('Invalid login')) {
+        showAuthError(t('authErrorInvalid'));
+      } else if (err.message && err.message.includes('already registered')) {
+        showAuthError(t('authErrorInvalid'));
+      } else {
+        showAuthError(err.message || t('authErrorNetwork'));
+      }
+    } finally {
+      submitSpan.textContent = originalText;
+      els.authSubmitBtn.disabled = false;
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      await Auth.signOut();
+      showToast(t('signOut') + ' ✓');
+    } catch (err) {
+      console.error('[ScriptPad] Sign out error:', err);
+    }
+  }
+
+  function openUpgrade() {
+    if (!state.user) {
+      openSignIn();
+      return;
+    }
+    showView('upgrade');
+  }
+
+  function handleSubscribe(period) {
+    const planId = period === 'annual'
+      ? CONFIG.PAYPAL_ANNUAL_PLAN_ID
+      : CONFIG.PAYPAL_MONTHLY_PLAN_ID;
+
+    if (!planId) {
+      showToast('Coming soon! 🚀');
+      return;
+    }
+
+    if (!state.user) {
+      openSignIn();
+      return;
+    }
+
+    // Build PayPal subscription URL with custom_id = Supabase user ID
+    const paypalUrl = `https://www.paypal.com/webapps/billing/subscriptions?plan_id=${planId}&custom_id=${encodeURIComponent(state.user.id)}`;
+
+    // Open PayPal checkout in new tab
+    chrome.tabs.create({ url: paypalUrl });
+
+    // Show a toast telling user to complete in PayPal
+    showToast(t('redirectingToPayPal'));
+
+    // Start polling for subscription activation (check every 10s for 5 min)
+    startSubscriptionPoll();
+  }
+
+  let subscriptionPollTimer = null;
+  let subscriptionPollCount = 0;
+
+  function startSubscriptionPoll() {
+    // Clear any existing poll
+    if (subscriptionPollTimer) clearInterval(subscriptionPollTimer);
+    subscriptionPollCount = 0;
+
+    subscriptionPollTimer = setInterval(async () => {
+      subscriptionPollCount++;
+      if (subscriptionPollCount > 30) { // Stop after 5 min (30 * 10s)
+        clearInterval(subscriptionPollTimer);
+        subscriptionPollTimer = null;
+        return;
+      }
+
+      // Check if plan was upgraded
+      await Auth.refreshPlan();
+      if (Auth.isPro()) {
+        clearInterval(subscriptionPollTimer);
+        subscriptionPollTimer = null;
+        showToast(t('proActivated'));
+      }
+    }, 10000);
   }
 
   // ---- Render: Folder View ----
@@ -501,6 +975,10 @@
   }
 
   async function createNewFolder() {
+    if (!isPro() && state.folders.length >= StorageAPI.FREE_FOLDER_LIMIT) {
+      showToast(t('folderLimitWarning'));
+      return;
+    }
     const name = prompt(t('folderNamePlaceholder'));
     if (!name || name.trim() === '') return;
     await StorageAPI.createFolder(name.trim());
@@ -554,7 +1032,7 @@
     $$('[data-i18n]').forEach(el => {
       el.textContent = t(el.dataset.i18n);
     });
-    els.searchInput.placeholder = t('searchPlaceholder');
+    els.searchInput.placeholder = state.activeTab === 'notes' ? t('searchNotesPlaceholder') : t('searchPlaceholder');
     els.newScriptBtn.textContent = t('newScript');
     els.editorTitleInput.placeholder = t('scriptTitlePlaceholder');
     els.editorTagsInput.placeholder = t('tagsPlaceholder');
@@ -812,6 +1290,10 @@
 
   // ---- Type Chooser ----
   function showTypeChooser() {
+    if (!isPro() && state.scripts.length >= StorageAPI.FREE_SCRIPT_LIMIT) {
+      showToast(t('scriptLimitWarning'));
+      return;
+    }
     showView('typeChooser');
   }
 
@@ -1052,7 +1534,10 @@
 
     // Escape: go back
     if (e.key === 'Escape') {
-      if (state.currentView === 'script') {
+      if (state.currentView === 'note') {
+        showView('main');
+        switchTab('notes');
+      } else if (state.currentView === 'script') {
         showView('main');
         renderMain();
       } else if (state.currentView === 'branching') {
@@ -1075,7 +1560,11 @@
         els.searchInput.blur();
         els.searchInput.value = '';
         state.searchQuery = '';
-        renderMain();
+        if (state.activeTab === 'notes') {
+          renderNotes();
+        } else {
+          renderMain();
+        }
       }
       return;
     }
@@ -1145,8 +1634,55 @@
     els.searchInput.addEventListener('input', () => {
       state.searchQuery = els.searchInput.value;
       state.selectedIndex = -1;
-      renderMain();
+      if (state.activeTab === 'notes') {
+        renderNotes();
+      } else {
+        renderMain();
+      }
     });
+
+    // Tabs
+    els.scriptsTab.addEventListener('click', () => switchTab('scripts'));
+    els.notesTab.addEventListener('click', () => switchTab('notes'));
+
+    // Notes
+    els.quickNoteSave.addEventListener('click', quickAddNote);
+    els.quickNoteInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        quickAddNote();
+      }
+    });
+    els.newNoteBtnFooter.addEventListener('click', () => {
+      els.quickNoteInput.focus();
+    });
+    els.noteBackBtn.addEventListener('click', () => {
+      showView('main');
+      switchTab('notes');
+    });
+    els.copyNoteBtn.addEventListener('click', copyCurrentNote);
+    els.deleteNoteBtn.addEventListener('click', deleteCurrentNote);
+    els.noteEditTextarea.addEventListener('input', handleNoteAutoSave);
+
+    // Account & Auth
+    els.signInBtn.addEventListener('click', openSignIn);
+    els.signOutBtn.addEventListener('click', handleSignOut);
+    els.upgradeFromSettings.addEventListener('click', openUpgrade);
+    els.signInBackBtn.addEventListener('click', () => showView('settings'));
+    els.authSubmitBtn.addEventListener('click', handleAuth);
+    els.authPasswordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleAuth();
+    });
+    els.authToggleLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      state.authMode = state.authMode === 'signin' ? 'signup' : 'signin';
+      els.authError.style.display = 'none';
+      updateAuthUI();
+    });
+    // Upgrade view
+    els.upgradeBackBtn.addEventListener('click', () => showView('settings'));
+    els.subscribeMonthlyBtn.addEventListener('click', () => handleSubscribe('monthly'));
+    els.subscribeAnnualBtn.addEventListener('click', () => handleSubscribe('annual'));
 
     // Header buttons
     els.langBtn.addEventListener('click', () => {
