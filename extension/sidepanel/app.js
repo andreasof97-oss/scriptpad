@@ -267,6 +267,22 @@
 
     skipBtn.addEventListener('click', completeOnboarding);
 
+    // Language toggle in onboarding
+    const onbLangBtn = $('#onboardingLangBtn');
+    if (onbLangBtn) {
+      onbLangBtn.textContent = currentLanguage === 'en' ? 'ES' : 'EN';
+      onbLangBtn.addEventListener('click', () => {
+        const newLang = currentLanguage === 'en' ? 'es' : 'en';
+        setLanguage(newLang);
+        state.settings.language = newLang;
+        StorageAPI.saveSettings(state.settings);
+        onbLangBtn.textContent = newLang === 'en' ? 'ES' : 'EN';
+        updateOnboardingI18n();
+        updateLangBtn();
+        updateI18n();
+      });
+    }
+
     // Click dots to navigate
     dots.forEach((dot, i) => {
       dot.addEventListener('click', () => goTo(i));
@@ -770,7 +786,7 @@
     showView('upgrade');
   }
 
-  function handleSubscribe(period) {
+  async function handleSubscribe(period) {
     const planId = period === 'annual'
       ? CONFIG.PAYPAL_ANNUAL_PLAN_ID
       : CONFIG.PAYPAL_MONTHLY_PLAN_ID;
@@ -785,19 +801,35 @@
       return;
     }
 
-    // Build PayPal subscription URL with custom_id = Supabase user ID
-    // Use sandbox URL for testing, switch to www.paypal.com for production
-    const paypalBase = CONFIG.PAYPAL_SANDBOX ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
-    const paypalUrl = `${paypalBase}/webapps/billing/subscriptions?plan_id=${planId}&custom_id=${encodeURIComponent(state.user.id)}`;
-
-    // Open PayPal checkout in new tab
-    chrome.tabs.create({ url: paypalUrl });
-
-    // Show a toast telling user to complete in PayPal
+    // Show loading state
     showToast(t('redirectingToPayPal'));
 
-    // Start polling for subscription activation (check every 10s for 5 min)
-    startSubscriptionPoll();
+    // Call our Supabase Edge Function to create a PayPal subscription with a proper approval URL
+    try {
+      const createUrl = CONFIG.PAYPAL_WEBHOOK_URL.replace('paypal-webhook', 'paypal-create-subscription');
+      const response = await fetch(createUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: planId,
+          user_id: state.user.id,
+          user_email: state.user.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.approve_url) {
+        chrome.tabs.create({ url: data.approve_url });
+        startSubscriptionPoll();
+      } else {
+        console.error('PayPal create subscription error:', data);
+        showToast(t('authErrorNetwork'));
+      }
+    } catch (err) {
+      console.error('PayPal subscription error:', err);
+      showToast(t('authErrorNetwork'));
+    }
   }
 
   let subscriptionPollTimer = null;

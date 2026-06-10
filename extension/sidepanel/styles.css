@@ -1366,10 +1366,32 @@ body {
   position: relative;
 }
 
-.onboarding-skip {
+.onboarding-top-bar {
   position: absolute;
   top: 12px;
+  left: 16px;
   right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+.onboarding-lang-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.onboarding-lang-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+.onboarding-skip {
   background: none;
   border: none;
   color: var(--text-muted);
@@ -1378,7 +1400,6 @@ body {
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   transition: color 0.2s;
-  z-index: 2;
 }
 .onboarding-skip:hover {
   color: var(--text-primary);
