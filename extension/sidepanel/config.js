@@ -8,6 +8,9 @@ const CONFIG = {
   PAYPAL_MONTHLY_PLAN_ID: 'P-8X424006GT123260SNIU46VY',
   PAYPAL_ANNUAL_PLAN_ID: 'P-2YR7314754472154KNIU5AGQ',
 
+  // Sandbox mode (set to false for production)
+  PAYPAL_SANDBOX: true,
+
   // PayPal webhook endpoint (Supabase Edge Function)
   PAYPAL_WEBHOOK_URL: 'https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/paypal-webhook'
 };

@@ -786,7 +786,9 @@
     }
 
     // Build PayPal subscription URL with custom_id = Supabase user ID
-    const paypalUrl = `https://www.paypal.com/webapps/billing/subscriptions?plan_id=${planId}&custom_id=${encodeURIComponent(state.user.id)}`;
+    // Use sandbox URL for testing, switch to www.paypal.com for production
+    const paypalBase = CONFIG.PAYPAL_SANDBOX ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+    const paypalUrl = `${paypalBase}/webapps/billing/subscriptions?plan_id=${planId}&custom_id=${encodeURIComponent(state.user.id)}`;
 
     // Open PayPal checkout in new tab
     chrome.tabs.create({ url: paypalUrl });
