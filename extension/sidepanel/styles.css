@@ -1644,7 +1644,8 @@ body {
   font-weight: 600;
 }
 .account-card-signed-in {
-  flex-direction: column;
+  flex-direction: column !important;
+  align-items: stretch !important;
   gap: 10px;
 }
 .account-card-row {
@@ -1655,9 +1656,11 @@ body {
 }
 .sign-out-btn {
   width: 100%;
-  text-align: center;
+  justify-content: center;
   padding: 8px 12px;
-  border-radius: var(--radius);
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.8;
 }
 .accent-btn {
   background: var(--accent) !important;
