@@ -285,13 +285,15 @@
             <button class="settings-btn accent-btn" id="signInBtn">🔑 <span data-i18n="signIn">Sign In</span></button>
           </div>
           <!-- Signed in state -->
-          <div id="accountSignedIn" class="account-card" style="display:none">
-            <div class="account-card-icon">✅</div>
-            <div class="account-card-info">
-              <p class="account-card-email" id="accountEmail"></p>
-              <p class="account-card-plan" id="accountPlan"></p>
+          <div id="accountSignedIn" class="account-card account-card-signed-in" style="display:none">
+            <div class="account-card-row">
+              <div class="account-card-icon">✅</div>
+              <div class="account-card-info">
+                <p class="account-card-email" id="accountEmail"></p>
+                <p class="account-card-plan" id="accountPlan"></p>
+              </div>
             </div>
-            <button class="settings-btn" id="signOutBtn">🚪 <span data-i18n="signOut">Sign Out</span></button>
+            <button class="settings-btn sign-out-btn" id="signOutBtn">🚪 <span data-i18n="signOut">Sign Out</span></button>
           </div>
           <!-- Upgrade CTA (visible when signed in on free plan) -->
           <div id="upgradeCtaSettings" class="upgrade-cta" style="display:none">

@@ -1643,6 +1643,22 @@ body {
   margin: 2px 0 0;
   font-weight: 600;
 }
+.account-card-signed-in {
+  flex-direction: column;
+  gap: 10px;
+}
+.account-card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.sign-out-btn {
+  width: 100%;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+}
 .accent-btn {
   background: var(--accent) !important;
   color: white !important;
