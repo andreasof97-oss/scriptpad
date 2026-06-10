@@ -5,13 +5,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
-const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com'
+// Hardcode sandbox URL — change to https://api-m.paypal.com for production
+const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 // Monthly and annual plan IDs
-const MONTHLY_PLAN_ID = 'P-8X424006GT123260SNIU46VY'
-const ANNUAL_PLAN_ID = 'P-2YR7314754472154KNIU5AGQ'
+const MONTHLY_PLAN_ID = 'P-9FP9239061604463NNIU6PQA'
+const ANNUAL_PLAN_ID = 'P-8S1302795Y232363RNIU6PSI'
 
 interface PayPalWebhookEvent {
   id: string

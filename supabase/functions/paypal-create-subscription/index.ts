@@ -1,9 +1,9 @@
 // ScriptPad — Create PayPal Subscription (Supabase Edge Function)
-// Creates a subscription via PayPal API and returns the approval URL
 
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
-const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com'
+// Hardcode sandbox URL — change to https://api-m.paypal.com for production
+const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
 
 async function getPayPalAccessToken(): Promise<string> {
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
@@ -23,7 +23,6 @@ async function getPayPalAccessToken(): Promise<string> {
 }
 
 Deno.serve(async (req) => {
-  // CORS
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -50,10 +49,9 @@ Deno.serve(async (req) => {
 
     const accessToken = await getPayPalAccessToken()
 
-    // Create subscription via PayPal API
     const subscriptionPayload: Record<string, unknown> = {
       plan_id,
-      custom_id: user_id,  // Links back to our Supabase user
+      custom_id: user_id,
       application_context: {
         brand_name: 'ScriptPad Pro',
         locale: 'en-US',
@@ -64,7 +62,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Pre-fill subscriber email if available
     if (user_email) {
       subscriptionPayload.subscriber = {
         email_address: user_email
@@ -91,13 +88,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Find the approval URL from the links array
     const approveLink = subscription.links?.find(
       (link: { rel: string; href: string }) => link.rel === 'approve'
     )
 
     if (!approveLink) {
-      console.error('No approve link in subscription:', subscription)
       return new Response(
         JSON.stringify({ error: 'No approval URL returned' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

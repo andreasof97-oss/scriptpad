@@ -275,7 +275,7 @@
         const newLang = currentLanguage === 'en' ? 'es' : 'en';
         setLanguage(newLang);
         state.settings.language = newLang;
-        StorageAPI.saveSettings(state.settings);
+        StorageAPI.updateSettings({ language: newLang });
         onbLangBtn.textContent = newLang === 'en' ? 'ES' : 'EN';
         updateOnboardingI18n();
         updateLangBtn();
@@ -809,7 +809,10 @@
       const createUrl = CONFIG.PAYPAL_WEBHOOK_URL.replace('paypal-webhook', 'paypal-create-subscription');
       const response = await fetch(createUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`
+        },
         body: JSON.stringify({
           plan_id: planId,
           user_id: state.user.id,
