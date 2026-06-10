@@ -1643,10 +1643,15 @@ body {
   margin: 2px 0 0;
   font-weight: 600;
 }
+.account-card-signed-out,
 .account-card-signed-in {
   flex-direction: column !important;
   align-items: stretch !important;
   gap: 10px;
+}
+.sign-in-btn-full {
+  width: 100%;
+  justify-content: center;
 }
 .account-card-row {
   display: flex;

@@ -276,13 +276,15 @@
         <div class="settings-section account-section" id="accountSection">
           <h3 data-i18n="account">Account</h3>
           <!-- Signed out state -->
-          <div id="accountSignedOut" class="account-card">
-            <div class="account-card-icon">👤</div>
-            <div class="account-card-info">
-              <p class="account-card-title" data-i18n="signInForPro">Sign in to unlock Pro</p>
-              <p class="account-card-hint" data-i18n="upgradeProHint">Unlimited scripts, folders, notes, cloud sync & more</p>
+          <div id="accountSignedOut" class="account-card account-card-signed-out">
+            <div class="account-card-row">
+              <div class="account-card-icon">👤</div>
+              <div class="account-card-info">
+                <p class="account-card-title" data-i18n="signInForPro">Sign in to unlock Pro</p>
+                <p class="account-card-hint" data-i18n="upgradeProHint">Unlimited scripts, folders, notes, cloud sync & more</p>
+              </div>
             </div>
-            <button class="settings-btn accent-btn" id="signInBtn">🔑 <span data-i18n="signIn">Sign In</span></button>
+            <button class="settings-btn accent-btn sign-in-btn-full" id="signInBtn">🔑 <span data-i18n="signIn">Sign In</span></button>
           </div>
           <!-- Signed in state -->
           <div id="accountSignedIn" class="account-card account-card-signed-in" style="display:none">
