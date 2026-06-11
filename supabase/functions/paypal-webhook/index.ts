@@ -5,14 +5,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
+const PAYPAL_WEBHOOK_ID = Deno.env.get('PAYPAL_WEBHOOK_ID') || ''
 // Hardcode sandbox URL — change to https://api-m.paypal.com for production
-const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
+const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.sandbox.paypal.com'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 // Monthly and annual plan IDs
-const MONTHLY_PLAN_ID = 'P-9FP9239061604463NNIU6PQA'
-const ANNUAL_PLAN_ID = 'P-8S1302795Y232363RNIU6PSI'
+const MONTHLY_PLAN_ID = 'P-9H033465YN698702HNIVSKYA'
+const ANNUAL_PLAN_ID = 'P-6B464778JK873840BNIVSKYA'
 
 interface PayPalWebhookEvent {
   id: string
@@ -58,9 +59,14 @@ async function getPayPalAccessToken(): Promise<string> {
 // Verify webhook signature with PayPal
 async function verifyWebhookSignature(
   headers: Headers,
-  body: string,
-  webhookId: string
+  body: string
 ): Promise<boolean> {
+  // Skip verification if no webhook ID configured (sandbox dev mode)
+  if (!PAYPAL_WEBHOOK_ID) {
+    console.warn('[PayPal Webhook] No PAYPAL_WEBHOOK_ID set — skipping signature verification')
+    return true
+  }
+
   try {
     const accessToken = await getPayPalAccessToken()
 
@@ -70,9 +76,11 @@ async function verifyWebhookSignature(
       transmission_id: headers.get('paypal-transmission-id'),
       transmission_sig: headers.get('paypal-transmission-sig'),
       transmission_time: headers.get('paypal-transmission-time'),
-      webhook_id: webhookId,
+      webhook_id: PAYPAL_WEBHOOK_ID,
       webhook_event: JSON.parse(body),
     }
+
+    console.log('[PayPal Webhook] Verifying signature with webhook ID:', PAYPAL_WEBHOOK_ID)
 
     const response = await fetch(`${PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
@@ -84,11 +92,12 @@ async function verifyWebhookSignature(
     })
 
     const result = await response.json()
+    console.log('[PayPal Webhook] Verification result:', result.verification_status)
     return result.verification_status === 'SUCCESS'
   } catch (err) {
-    console.error('Webhook verification error:', err)
+    console.error('[PayPal Webhook] Signature verification error:', err)
     // In sandbox mode, verification often fails — allow it through
-    // In production, you'd want to return false here
+    // TODO: In production, return false here
     return true
   }
 }
@@ -116,15 +125,25 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.text()
+  console.log('[PayPal Webhook] Raw body received, length:', body.length)
+
   let event: PayPalWebhookEvent
 
   try {
     event = JSON.parse(body)
   } catch {
+    console.error('[PayPal Webhook] Invalid JSON body')
     return new Response('Invalid JSON', { status: 400 })
   }
 
-  console.log(`[PayPal Webhook] Event: ${event.event_type}, Subscription: ${event.resource?.id}`)
+  console.log(`[PayPal Webhook] Event: ${event.event_type}, Subscription: ${event.resource?.id}, User: ${event.resource?.custom_id}`)
+
+  // Verify PayPal signature (skips if no webhook ID configured)
+  const isValid = await verifyWebhookSignature(req.headers, body)
+  if (!isValid) {
+    console.error('[PayPal Webhook] Signature verification FAILED — rejecting')
+    return new Response('Unauthorized', { status: 401 })
+  }
 
   // Create Supabase admin client
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -172,12 +191,13 @@ Deno.serve(async (req) => {
 
     // Subscription payment completed (recurring payment)
     case 'PAYMENT.SALE.COMPLETED': {
-      // Update the subscription period end if we have subscription info
-      if (subscriptionId) {
+      // For sale events, the subscription ID is in billing_agreement_id, not id
+      const saleSubscriptionId = (event.resource as any).billing_agreement_id || subscriptionId
+      if (saleSubscriptionId) {
         const { data: existing } = await supabase
           .from('subscriptions')
           .select('user_id')
-          .eq('paypal_subscription_id', subscriptionId)
+          .eq('paypal_subscription_id', saleSubscriptionId)
           .maybeSingle()
 
         if (existing) {
@@ -187,9 +207,11 @@ Deno.serve(async (req) => {
               status: 'active',
               updated_at: new Date().toISOString(),
             })
-            .eq('paypal_subscription_id', subscriptionId)
+            .eq('paypal_subscription_id', saleSubscriptionId)
 
-          console.log(`[PayPal Webhook] Renewal payment for subscription ${subscriptionId}`)
+          console.log(`[PayPal Webhook] Renewal payment for subscription ${saleSubscriptionId}`)
+        } else {
+          console.log(`[PayPal Webhook] No matching subscription found for ${saleSubscriptionId}`)
         }
       }
       break

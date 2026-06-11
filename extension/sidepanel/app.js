@@ -806,7 +806,7 @@
 
     // Call our Supabase Edge Function to create a PayPal subscription with a proper approval URL
     try {
-      const createUrl = CONFIG.PAYPAL_WEBHOOK_URL.replace('paypal-webhook', 'paypal-create-subscription');
+      const createUrl = CONFIG.PAYPAL_CREATE_SUBSCRIPTION_URL || CONFIG.PAYPAL_WEBHOOK_URL.replace('paypal-webhook', 'paypal-create-subscription');
       const response = await fetch(createUrl, {
         method: 'POST',
         headers: {

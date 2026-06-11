@@ -2,8 +2,8 @@
 
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
-// Hardcode sandbox URL — change to https://api-m.paypal.com for production
-const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
+// LIVE PayPal API
+const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com'
 
 async function getPayPalAccessToken(): Promise<string> {
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
