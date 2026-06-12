@@ -31,25 +31,26 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiKey) {
+    const geminiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiKey) {
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ error: 'Gemini API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Build messages array
-    const messages: Array<{ role: string; content: string }> = [
-      { role: 'system', content: SYSTEM_PROMPT }
-    ];
+    // Build contents array for Gemini
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
     // Add conversation history (max 6 messages)
     if (Array.isArray(history)) {
       const trimmedHistory = history.slice(-6);
       for (const msg of trimmedHistory) {
         if (msg.role && msg.content) {
-          messages.push({ role: msg.role, content: msg.content });
+          contents.push({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+          });
         }
       }
     }
@@ -59,35 +60,37 @@ Deno.serve(async (req: Request) => {
     if (context && typeof context === 'string' && context.trim()) {
       userContent = `${context}\n\n--- AGENT'S QUESTION ---\n${message}`;
     }
-    messages.push({ role: 'user', content: userContent });
+    contents.push({ role: 'user', parts: [{ text: userContent }] });
 
-    // Call OpenAI with streaming
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Gemini with streaming
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${geminiKey}`;
+
+    const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages,
-        max_tokens: 500,
-        temperature: 0.3,
-        stream: true,
+        system_instruction: {
+          parts: [{ text: SYSTEM_PROMPT }]
+        },
+        contents,
+        generationConfig: {
+          maxOutputTokens: 1024,
+          temperature: 0.3,
+        }
       }),
     });
 
-    if (!openaiResponse.ok) {
-      const errorBody = await openaiResponse.text();
-      console.error('OpenAI API error:', openaiResponse.status, errorBody);
+    if (!geminiResponse.ok) {
+      const errorBody = await geminiResponse.text();
+      console.error('Gemini API error:', geminiResponse.status, errorBody);
       return new Response(
-        JSON.stringify({ error: 'AI service error', details: openaiResponse.status }),
+        JSON.stringify({ error: 'AI service error', details: geminiResponse.status }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Stream the response back to the client
-    const reader = openaiResponse.body?.getReader();
+    const reader = geminiResponse.body?.getReader();
     if (!reader) {
       return new Response(
         JSON.stringify({ error: 'No response stream' }),
@@ -104,7 +107,12 @@ Deno.serve(async (req: Request) => {
           let buffer = '';
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              // Send done signal
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              controller.close();
+              return;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
@@ -123,7 +131,7 @@ Deno.serve(async (req: Request) => {
 
               try {
                 const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
+                const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (content) {
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                 }
@@ -132,7 +140,6 @@ Deno.serve(async (req: Request) => {
               }
             }
           }
-          controller.close();
         } catch (err) {
           console.error('Stream processing error:', err);
           controller.error(err);
