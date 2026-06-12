@@ -33,6 +33,7 @@
       <div class="tab-bar" id="tabBar">
         <button class="tab-btn active" id="scriptsTab" data-tab="scripts">📄 <span data-i18n="scriptsTab">Scripts</span></button>
         <button class="tab-btn" id="notesTab" data-tab="notes">📝 <span data-i18n="notesTab">Notes</span></button>
+        <button class="tab-btn" id="kbTab" data-tab="kb">📚 <span data-i18n="kbTab">KB</span></button>
       </div>
 
       <!-- Scripts content -->
@@ -70,6 +71,36 @@
       <!-- Notes footer -->
       <div class="panel-footer" id="notesFooter" style="display:none">
         <button class="add-btn" id="newNoteBtnFooter">📝 <span data-i18n="newNote">+ New Note</span></button>
+      </div>
+
+      <!-- KB content -->
+      <div class="panel-content" id="kbContent" style="display:none">
+        <!-- KB count -->
+        <div class="notes-count-bar" id="kbCountBar"></div>
+        <!-- KB limit banner -->
+        <div class="notes-limit-banner" id="kbLimitBanner" style="display:none">
+          <span class="notes-limit-icon">🔒</span>
+          <div class="notes-limit-text">
+            <strong id="kbLimitTitle">KB limit reached</strong>
+            <span id="kbLimitHint">Upgrade to Pro for unlimited entries</span>
+          </div>
+        </div>
+        <!-- Category filter chips -->
+        <div class="kb-filter-chips" id="kbFilterChips">
+          <button class="kb-chip active" data-category="all">All</button>
+          <button class="kb-chip" data-category="products">Products</button>
+          <button class="kb-chip" data-category="bundles">Bundles</button>
+          <button class="kb-chip" data-category="retention">Retention</button>
+          <button class="kb-chip" data-category="objections">Objections</button>
+          <button class="kb-chip" data-category="custom">Custom</button>
+        </div>
+        <!-- KB list -->
+        <div id="kbList"></div>
+      </div>
+
+      <!-- KB footer -->
+      <div class="panel-footer" id="kbFooter" style="display:none">
+        <button class="add-btn" id="newKBEntryBtn">📚 <span data-i18n="newKBEntry">+ New Entry</span></button>
       </div>
     </div>
 
@@ -407,6 +438,71 @@
           <button class="upgrade-btn upgrade-btn-annual" id="subscribeAnnualBtn">$49/yr — <span data-i18n="subscribeAnnual">Subscribe Annually</span></button>
         </div>
         <p class="upgrade-footer-note" data-i18n="upgradeFooter">Cancel anytime. Secure payment via PayPal.</p>
+      </div>
+    </div>
+
+    <!-- KB ENTRY DETAIL VIEW -->
+    <div id="kbDetailView" class="view">
+      <header class="script-view-header">
+        <button class="back-btn" id="kbDetailBackBtn">←</button>
+        <h2 class="script-view-title" id="kbDetailTitle"></h2>
+        <button class="copy-all-btn" id="copyKBEntryBtn">📋 <span data-i18n="copyKBEntry">Copy</span></button>
+      </header>
+
+      <div class="kb-detail-meta" id="kbDetailMeta">
+        <span class="kb-category-badge" id="kbDetailCategory"></span>
+        <div class="script-tags" id="kbDetailTags"></div>
+      </div>
+
+      <div class="script-body" id="kbDetailBody"></div>
+
+      <div class="script-view-footer">
+        <button class="footer-btn" id="editKBEntryBtn">✏️ <span data-i18n="edit">Edit</span></button>
+        <button class="footer-btn" id="pinKBEntryBtn">📌 <span data-i18n="pin">Pin</span></button>
+        <button class="footer-btn danger" id="deleteKBEntryBtn">🗑️ <span data-i18n="delete">Delete</span></button>
+      </div>
+    </div>
+
+    <!-- KB ENTRY EDITOR VIEW -->
+    <div id="kbEditorView" class="view">
+      <header class="editor-header">
+        <button class="back-btn" id="kbEditorBackBtn">←</button>
+        <h2 class="editor-title" id="kbEditorTitle">New Entry</h2>
+        <button class="save-btn" id="saveKBEntryBtn" data-i18n="save">Save</button>
+      </header>
+
+      <div class="editor-content">
+        <div class="form-group">
+          <label data-i18n="kbEntryTitle">Entry Title</label>
+          <input type="text" id="kbEditorTitleInput" class="form-input" placeholder="e.g., Premium Internet Plan">
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="kbCategory">Category</label>
+          <select id="kbEditorCategorySelect" class="form-select">
+            <option value="products">Products</option>
+            <option value="bundles">Bundles</option>
+            <option value="retention">Retention</option>
+            <option value="objections">Objections</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="tags">Tags</label>
+          <input type="text" id="kbEditorTagsInput" class="form-input" placeholder="Add tags (comma separated)">
+        </div>
+
+        <div class="form-group editor-body-group">
+          <label data-i18n="kbBody">Content</label>
+          <div class="editor-toolbar" id="kbEditorToolbar">
+            <button class="toolbar-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button class="toolbar-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Bullet list">•</button>
+            <button class="toolbar-btn" data-cmd="highlight" title="Highlight">🖍</button>
+          </div>
+          <div id="kbEditorBodyInput" class="form-richtext" contenteditable="true" data-placeholder="Write entry content here..."></div>
+        </div>
       </div>
     </div>
 

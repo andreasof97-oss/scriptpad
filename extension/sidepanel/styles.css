@@ -2004,3 +2004,124 @@ body {
 .note-edit-textarea::placeholder {
   color: var(--text-muted);
 }
+
+/* ===== KNOWLEDGE BASE ===== */
+
+/* Category filter chips */
+.kb-filter-chips {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.kb-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+.kb-chip {
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.kb-chip:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+.kb-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* KB entry list items */
+.kb-entry-item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+.kb-entry-item:hover {
+  background: var(--bg-hover);
+}
+.kb-entry-item:hover .copy-btn {
+  opacity: 1;
+}
+.kb-entry-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.kb-entry-info {
+  flex: 1;
+  min-width: 0;
+}
+.kb-entry-title {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kb-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+.kb-category-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+.kb-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.kb-entry-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* KB detail meta area */
+.kb-detail-meta {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.kb-detail-meta .script-tags {
+  border-bottom: none;
+  padding: 0;
+  flex: 1;
+}
+.kb-detail-meta .kb-category-badge {
+  font-size: 11px;
+  padding: 2px 10px;
+}

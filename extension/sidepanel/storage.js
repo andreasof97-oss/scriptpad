@@ -17,16 +17,18 @@ const StorageAPI = (() => {
   const FREE_NOTE_LIMIT = 15;
   const FREE_SCRIPT_LIMIT = 15;
   const FREE_FOLDER_LIMIT = 5;
+  const FREE_KB_LIMIT = 20;
 
   // ---- Generic helpers ----
 
   async function getAll() {
     return new Promise((resolve) => {
-      storage.get(['folders', 'scripts', 'settings', 'notes'], (data) => {
+      storage.get(['folders', 'scripts', 'settings', 'notes', 'knowledgeBase'], (data) => {
         resolve({
           folders: data.folders || [],
           scripts: data.scripts || [],
           notes: data.notes || [],
+          knowledgeBase: data.knowledgeBase || [],
           settings: data.settings || { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' }
         });
       });
@@ -214,6 +216,61 @@ const StorageAPI = (() => {
     return notes.length;
   }
 
+  // ---- Knowledge Base ----
+
+  async function getKnowledgeBase() {
+    const data = await getAll();
+    return data.knowledgeBase;
+  }
+
+  async function getKBEntry(id) {
+    const kb = await getKnowledgeBase();
+    return kb.find(e => e.id === id) || null;
+  }
+
+  async function createKBEntry({ category, title, body, tags, pinned }) {
+    const data = await getAll();
+    const now = new Date().toISOString();
+    const entry = {
+      id: uuid(),
+      category: category || 'custom',
+      title: title || '',
+      body: body || '',
+      tags: tags || [],
+      pinned: pinned || false,
+      createdAt: now,
+      updatedAt: now
+    };
+    data.knowledgeBase.push(entry);
+    await saveAll({ knowledgeBase: data.knowledgeBase });
+    return entry;
+  }
+
+  async function updateKBEntry(id, updates) {
+    const data = await getAll();
+    const idx = data.knowledgeBase.findIndex(e => e.id === id);
+    if (idx === -1) return null;
+    data.knowledgeBase[idx] = {
+      ...data.knowledgeBase[idx],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    await saveAll({ knowledgeBase: data.knowledgeBase });
+    return data.knowledgeBase[idx];
+  }
+
+  async function deleteKBEntry(id) {
+    const data = await getAll();
+    data.knowledgeBase = data.knowledgeBase.filter(e => e.id !== id);
+    await saveAll({ knowledgeBase: data.knowledgeBase });
+  }
+
+  async function toggleKBPin(id) {
+    const entry = await getKBEntry(id);
+    if (!entry) return null;
+    return updateKBEntry(id, { pinned: !entry.pinned });
+  }
+
   // ---- Import / Export ----
 
   async function exportData() {
@@ -255,6 +312,16 @@ const StorageAPI = (() => {
           body: n.body || '',
           createdAt: n.createdAt || new Date().toISOString(),
           updatedAt: n.updatedAt || new Date().toISOString()
+        })) : [],
+        knowledgeBase: Array.isArray(data.knowledgeBase) ? data.knowledgeBase.map(e => ({
+          id: e.id || uuid(),
+          category: e.category || 'custom',
+          title: e.title || '',
+          body: e.body || '',
+          tags: Array.isArray(e.tags) ? e.tags : [],
+          pinned: !!e.pinned,
+          createdAt: e.createdAt || new Date().toISOString(),
+          updatedAt: e.updatedAt || new Date().toISOString()
         })) : [],
         settings: data.settings || { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' }
       };
@@ -349,6 +416,12 @@ const StorageAPI = (() => {
         await addBranchingSampleIfMissing();
       } catch (e) {
         console.error('[ScriptPad] Failed to add branching sample:', e);
+      }
+      // Check if we need to add KB seed data (v1.4 upgrade)
+      try {
+        await addKBSeedIfMissing();
+      } catch (e) {
+        console.error('[ScriptPad] Failed to add KB seed data:', e);
       }
       return false;
     }
@@ -478,13 +551,71 @@ const StorageAPI = (() => {
     };
 
     await saveAll(seedData);
+
+    // Also seed KB entries on fresh install
+    await addKBSeedIfMissing();
+
     return true;
+  }
+
+  // Add KB seed data for users upgrading or on fresh install
+  async function addKBSeedIfMissing() {
+    const freshData = await getAll();
+    if (freshData.knowledgeBase.length > 0) return;
+
+    const kbSeed = [
+      {
+        id: uuid(),
+        category: 'products',
+        title: 'Premium Internet Plan',
+        body: '<p><strong>Speed:</strong> 500 Mbps down / 100 Mbps up</p><p><strong>Price:</strong> $79.99/mo</p><p><strong>Includes:</strong></p><ul><li>Wi-Fi router rental</li><li>24/7 support</li></ul><p><strong>Contract:</strong> 12 months, $199 early termination fee</p><p><strong>Best for:</strong> Families, remote workers, gamers</p>',
+        tags: ['internet', 'premium', '500mbps'],
+        pinned: true,
+        createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
+      },
+      {
+        id: uuid(),
+        category: 'bundles',
+        title: 'Triple Play Bundle',
+        body: '<p><strong>Includes:</strong></p><ul><li>Internet 500 Mbps</li><li>TV 200 channels</li><li>Phone unlimited local</li></ul><p><strong>Regular price:</strong> $149.99/mo</p><p><strong>Bundle price:</strong> <span style="color:#fbbf24">$119.99/mo (save $30)</span></p><p><strong>Add-ons:</strong></p><ul><li>Premium channels +$15/mo</li><li>International calling +$10/mo</li></ul><p><strong>Availability:</strong> New customers or upgrades only</p>',
+        tags: ['bundle', 'triple-play', 'tv', 'internet', 'phone'],
+        pinned: false,
+        createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString()
+      },
+      {
+        id: uuid(),
+        category: 'retention',
+        title: 'Loyalty Discount — 3 Month Offer',
+        body: '<p><strong>Trigger:</strong> Customer calls to cancel or downgrade</p><p><strong>Offer:</strong> <span style="color:#fbbf24">50% off current plan for 3 months</span></p><p><strong>Eligibility:</strong></p><ul><li>6+ months on current plan</li><li>No prior retention offer in 12 months</li></ul><p><strong>Escalation:</strong> If they decline, offer free month + waive any fees</p><p><strong>Approval:</strong> Auto-approved, no supervisor needed</p>',
+        tags: ['retention', 'loyalty', 'discount', 'save'],
+        pinned: true,
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
+      },
+      {
+        id: uuid(),
+        category: 'objections',
+        title: '"Too Expensive" Objection Handler',
+        body: '<p><strong>Step 1 — Acknowledge:</strong></p><p>"I completely understand, and I appreciate you being upfront about that. Price is always an important factor."</p><p><strong>Step 2 — Reframe Value:</strong></p><p>"Let me break down what you\'re actually getting for that price..."</p><ul><li>Highlight unique features they won\'t get elsewhere</li><li>Calculate cost per day ("that\'s less than a cup of coffee")</li><li>Mention what\'s <em>included</em> that competitors charge extra for</li></ul><p><strong>Step 3 — Compare Alternatives:</strong></p><p>"If you went with <span style="color:#fbbf24">[competitor]</span>, you\'d pay <span style="color:#fbbf24">[price]</span> but you\'d lose <span style="color:#fbbf24">[key benefits]</span>."</p><p><strong>Step 4 — Close:</strong></p><p>"So with everything included, would you like to go ahead and get started today?"</p>',
+        tags: ['objection', 'price', 'expensive', 'common'],
+        pinned: false,
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 3600000).toISOString()
+      }
+    ];
+
+    freshData.knowledgeBase = kbSeed;
+    await saveAll({ knowledgeBase: freshData.knowledgeBase });
+    console.log('[ScriptPad] Added KB seed data (4 entries)');
   }
 
   return {
     FREE_NOTE_LIMIT,
     FREE_SCRIPT_LIMIT,
     FREE_FOLDER_LIMIT,
+    FREE_KB_LIMIT,
     getAll,
     getScripts,
     getScript,
@@ -502,6 +633,12 @@ const StorageAPI = (() => {
     updateNote,
     deleteNote,
     getNotesCount,
+    getKnowledgeBase,
+    getKBEntry,
+    createKBEntry,
+    updateKBEntry,
+    deleteKBEntry,
+    toggleKBPin,
     getSettings,
     updateSettings,
     exportData,

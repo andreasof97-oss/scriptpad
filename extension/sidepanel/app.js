@@ -8,11 +8,15 @@
     scripts: [],
     folders: [],
     notes: [],
+    knowledgeBase: [],
     settings: { language: 'en', theme: 'dark', hotkey: 'Ctrl+Shift+S' },
     currentView: 'main',
-    activeTab: 'scripts', // 'scripts' or 'notes'
+    activeTab: 'scripts', // 'scripts', 'notes', or 'kb'
+    kbCategoryFilter: 'all',
     currentScriptId: null,
     currentNoteId: null,
+    currentKBEntryId: null,
+    editingKBEntryId: null, // null = new, string = editing existing
     editingScriptId: null, // null = new, string = editing existing
     selectedIndex: -1,
     searchQuery: '',
@@ -43,6 +47,8 @@
     typeChooser: $('#typeChooserView'),
     branchingEditor: $('#branchingEditorView'),
     note: $('#noteView'),
+    kbDetail: $('#kbDetailView'),
+    kbEditor: $('#kbEditorView'),
     signIn: $('#signInView'),
     upgrade: $('#upgradeView')
   };
@@ -140,6 +146,35 @@
     scriptsFooter: $('#scriptsFooter'),
     notesFooter: $('#notesFooter'),
     newNoteBtnFooter: $('#newNoteBtnFooter'),
+    // KB tab & content
+    kbTab: $('#kbTab'),
+    kbContent: $('#kbContent'),
+    kbCountBar: $('#kbCountBar'),
+    kbLimitBanner: $('#kbLimitBanner'),
+    kbLimitTitle: $('#kbLimitTitle'),
+    kbLimitHint: $('#kbLimitHint'),
+    kbFilterChips: $('#kbFilterChips'),
+    kbList: $('#kbList'),
+    kbFooter: $('#kbFooter'),
+    newKBEntryBtn: $('#newKBEntryBtn'),
+    // KB detail
+    kbDetailBackBtn: $('#kbDetailBackBtn'),
+    kbDetailTitle: $('#kbDetailTitle'),
+    copyKBEntryBtn: $('#copyKBEntryBtn'),
+    kbDetailCategory: $('#kbDetailCategory'),
+    kbDetailTags: $('#kbDetailTags'),
+    kbDetailBody: $('#kbDetailBody'),
+    editKBEntryBtn: $('#editKBEntryBtn'),
+    pinKBEntryBtn: $('#pinKBEntryBtn'),
+    deleteKBEntryBtn: $('#deleteKBEntryBtn'),
+    // KB editor
+    kbEditorBackBtn: $('#kbEditorBackBtn'),
+    kbEditorTitle: $('#kbEditorTitle'),
+    saveKBEntryBtn: $('#saveKBEntryBtn'),
+    kbEditorTitleInput: $('#kbEditorTitleInput'),
+    kbEditorCategorySelect: $('#kbEditorCategorySelect'),
+    kbEditorTagsInput: $('#kbEditorTagsInput'),
+    kbEditorBodyInput: $('#kbEditorBodyInput'),
     // Note detail
     noteBackBtn: $('#noteBackBtn'),
     noteViewTitle: $('#noteViewTitle'),
@@ -313,6 +348,9 @@
       if (data.activeTab === 'notes') {
         state.activeTab = 'notes';
         switchTab('notes');
+      } else if (data.activeTab === 'kb') {
+        state.activeTab = 'kb';
+        switchTab('kb');
       }
     });
   }
@@ -322,9 +360,11 @@
     state.scripts = data.scripts;
     state.folders = data.folders;
     state.notes = data.notes;
+    state.knowledgeBase = data.knowledgeBase;
     state.settings = data.settings;
     SearchEngine.setScripts(state.scripts);
     SearchEngine.setNotes(state.notes);
+    SearchEngine.setKB(state.knowledgeBase);
   }
 
   // ---- Views ----
@@ -343,21 +383,32 @@
     // Update tab buttons
     els.scriptsTab.classList.toggle('active', tab === 'scripts');
     els.notesTab.classList.toggle('active', tab === 'notes');
+    els.kbTab.classList.toggle('active', tab === 'kb');
 
     // Toggle content visibility
     els.panelContent.style.display = tab === 'scripts' ? '' : 'none';
     els.notesContent.style.display = tab === 'notes' ? '' : 'none';
+    els.kbContent.style.display = tab === 'kb' ? '' : 'none';
     els.scriptsFooter.style.display = tab === 'scripts' ? '' : 'none';
     els.notesFooter.style.display = tab === 'notes' ? '' : 'none';
+    els.kbFooter.style.display = tab === 'kb' ? '' : 'none';
 
     // Update search placeholder
-    els.searchInput.placeholder = tab === 'scripts' ? t('searchPlaceholder') : t('searchNotesPlaceholder');
+    if (tab === 'kb') {
+      els.searchInput.placeholder = t('searchKBPlaceholder');
+    } else if (tab === 'notes') {
+      els.searchInput.placeholder = t('searchNotesPlaceholder');
+    } else {
+      els.searchInput.placeholder = t('searchPlaceholder');
+    }
 
     // Persist tab choice
     chrome.storage.local.set({ activeTab: tab });
 
     if (tab === 'notes') {
       renderNotes();
+    } else if (tab === 'kb') {
+      renderKB();
     } else {
       renderMain();
     }
@@ -653,6 +704,277 @@
     copyToClipboard(body);
   }
 
+  // ---- Knowledge Base ----
+  const KB_CATEGORIES = ['products', 'bundles', 'retention', 'objections', 'custom'];
+  const KB_CATEGORY_COLORS = {
+    products: '#3b82f6',
+    bundles: '#8b5cf6',
+    retention: '#f59e0b',
+    objections: '#ef4444',
+    custom: '#6b7280'
+  };
+
+  function getKBCategoryLabel(cat) {
+    const map = {
+      products: 'kbCategoryProducts',
+      bundles: 'kbCategoryBundles',
+      retention: 'kbCategoryRetention',
+      objections: 'kbCategoryObjections',
+      custom: 'kbCategoryCustom'
+    };
+    return t(map[cat] || 'kbCategoryCustom');
+  }
+
+  function renderKB() {
+    const list = els.kbList;
+    list.innerHTML = '';
+
+    const kbCount = (state.knowledgeBase || []).length;
+    const kbLimit = getEffectiveKBLimit();
+    const atLimit = !isPro() && kbCount >= kbLimit;
+
+    // Count bar (only for free tier)
+    if (!isPro()) {
+      els.kbCountBar.textContent = `${kbCount}/${StorageAPI.FREE_KB_LIMIT} ${t('kbEntriesCount')}`;
+      els.kbCountBar.style.display = '';
+    } else {
+      els.kbCountBar.style.display = 'none';
+    }
+
+    // Limit banner
+    if (atLimit) {
+      els.kbLimitBanner.style.display = 'flex';
+      els.kbLimitTitle.textContent = t('kbLimitReached');
+      els.kbLimitHint.textContent = t('upgradeToProKB');
+    } else {
+      els.kbLimitBanner.style.display = 'none';
+    }
+
+    // Disable new entry button if at limit
+    els.newKBEntryBtn.disabled = atLimit;
+    els.newKBEntryBtn.title = atLimit ? t('kbLimitWarning') : '';
+
+    // Update filter chip labels
+    updateKBFilterChips();
+
+    // Filter entries
+    let displayEntries = [...(state.knowledgeBase || [])];
+
+    // Apply search
+    if (state.searchQuery) {
+      displayEntries = SearchEngine.searchKB(state.searchQuery);
+    }
+
+    // Apply category filter
+    if (state.kbCategoryFilter !== 'all') {
+      displayEntries = displayEntries.filter(e => e.category === state.kbCategoryFilter);
+    }
+
+    // Sort: pinned first, then by updatedAt
+    displayEntries.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
+    if (displayEntries.length === 0) {
+      if (state.searchQuery || state.kbCategoryFilter !== 'all') {
+        list.innerHTML = renderEmptyState('\uD83D\uDD0D', t('noResults'), t('noResultsHint'));
+      } else {
+        list.innerHTML = renderEmptyState('\uD83D\uDCDA', t('noKBEntries'), t('noKBEntriesHint'));
+      }
+      return;
+    }
+
+    displayEntries.forEach(entry => list.appendChild(createKBItem(entry)));
+  }
+
+  function updateKBFilterChips() {
+    const chips = els.kbFilterChips.querySelectorAll('.kb-chip');
+    chips.forEach(chip => {
+      const cat = chip.dataset.category;
+      chip.classList.toggle('active', cat === state.kbCategoryFilter);
+      // Update label text
+      if (cat === 'all') {
+        chip.textContent = t('kbCategoryAll');
+      } else {
+        chip.textContent = getKBCategoryLabel(cat);
+      }
+      // Set active color
+      if (cat === state.kbCategoryFilter && cat !== 'all') {
+        chip.style.background = KB_CATEGORY_COLORS[cat] || '';
+        chip.style.color = '#fff';
+        chip.style.borderColor = KB_CATEGORY_COLORS[cat] || '';
+      } else if (cat === state.kbCategoryFilter && cat === 'all') {
+        chip.style.background = 'var(--accent)';
+        chip.style.color = '#fff';
+        chip.style.borderColor = 'var(--accent)';
+      } else {
+        chip.style.background = '';
+        chip.style.color = '';
+        chip.style.borderColor = '';
+      }
+    });
+  }
+
+  function createKBItem(entry) {
+    const div = document.createElement('div');
+    div.className = 'kb-entry-item';
+    div.dataset.id = entry.id;
+
+    const color = KB_CATEGORY_COLORS[entry.category] || KB_CATEGORY_COLORS.custom;
+    const categoryLabel = getKBCategoryLabel(entry.category);
+    const timeStr = timeAgo(entry.updatedAt);
+    const tagsHtml = (entry.tags || []).slice(0, 3).map(tag =>
+      `<span class="kb-tag">#${esc(tag)}</span>`
+    ).join('');
+
+    div.innerHTML = `
+      <span class="kb-entry-dot" style="background:${color}"></span>
+      <div class="kb-entry-info">
+        <div class="kb-entry-title">${esc(entry.title)}${entry.pinned ? ' <span class="pin-icon">\uD83D\uDCCC</span>' : ''}</div>
+        <div class="kb-entry-meta">
+          <span class="kb-category-badge" style="background:${color}20;color:${color};border-color:${color}40">${categoryLabel}</span>
+          ${tagsHtml}
+          <span class="kb-entry-time">${t('updatedAgo')} ${timeStr}</span>
+        </div>
+      </div>
+      <button class="copy-btn" title="${t('copy')}">\uD83D\uDCCB</button>
+    `;
+
+    div.addEventListener('click', (e) => {
+      if (e.target.closest('.copy-btn')) return;
+      openKBEntry(entry.id);
+    });
+    div.querySelector('.copy-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyKBEntryText(entry);
+    });
+
+    return div;
+  }
+
+  function copyKBEntryText(entry) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = entry.body || '';
+    copyToClipboard(tempDiv.textContent || tempDiv.innerText || '');
+  }
+
+  function openKBEntry(entryId) {
+    const entry = (state.knowledgeBase || []).find(e => e.id === entryId);
+    if (!entry) return;
+
+    state.currentKBEntryId = entryId;
+    els.kbDetailTitle.textContent = entry.title;
+
+    // Category badge
+    const color = KB_CATEGORY_COLORS[entry.category] || KB_CATEGORY_COLORS.custom;
+    const categoryLabel = getKBCategoryLabel(entry.category);
+    els.kbDetailCategory.textContent = categoryLabel;
+    els.kbDetailCategory.style.background = `${color}20`;
+    els.kbDetailCategory.style.color = color;
+    els.kbDetailCategory.style.borderColor = `${color}40`;
+
+    // Tags
+    els.kbDetailTags.innerHTML = (entry.tags || []).map(tag =>
+      `<span class="tag">#${esc(tag)}</span>`
+    ).join('');
+
+    // Body
+    els.kbDetailBody.innerHTML = entry.body || '';
+
+    // Pin button text
+    const pinSpan = els.pinKBEntryBtn.querySelector('span');
+    if (pinSpan) pinSpan.textContent = entry.pinned ? t('unpin') : t('pin');
+
+    showView('kbDetail');
+  }
+
+  function openKBEditor(entryId) {
+    state.editingKBEntryId = entryId || null;
+
+    // Update category dropdown labels
+    const catSelect = els.kbEditorCategorySelect;
+    catSelect.querySelectorAll('option').forEach(opt => {
+      opt.textContent = getKBCategoryLabel(opt.value);
+    });
+
+    if (entryId) {
+      const entry = (state.knowledgeBase || []).find(e => e.id === entryId);
+      if (!entry) return;
+      els.kbEditorTitle.textContent = t('edit');
+      els.kbEditorTitleInput.value = entry.title;
+      els.kbEditorCategorySelect.value = entry.category || 'custom';
+      els.kbEditorTagsInput.value = (entry.tags || []).join(', ');
+      els.kbEditorBodyInput.innerHTML = entry.body || '';
+    } else {
+      els.kbEditorTitle.textContent = t('newKBEntry');
+      els.kbEditorTitleInput.value = '';
+      els.kbEditorCategorySelect.value = 'products';
+      els.kbEditorTagsInput.value = '';
+      els.kbEditorBodyInput.innerHTML = '';
+    }
+
+    showView('kbEditor');
+    els.kbEditorTitleInput.focus();
+  }
+
+  async function saveKBEntry() {
+    const title = els.kbEditorTitleInput.value.trim();
+    if (!title) {
+      els.kbEditorTitleInput.focus();
+      return;
+    }
+
+    const category = els.kbEditorCategorySelect.value;
+    const body = els.kbEditorBodyInput.innerHTML;
+    const tags = els.kbEditorTagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (state.editingKBEntryId) {
+      await StorageAPI.updateKBEntry(state.editingKBEntryId, { title, category, body, tags });
+    } else {
+      if (!isPro() && (state.knowledgeBase || []).length >= StorageAPI.FREE_KB_LIMIT) {
+        showToast(t('kbLimitWarning'));
+        return;
+      }
+      await StorageAPI.createKBEntry({ title, category, body, tags });
+    }
+
+    await loadData();
+    showToast(t('kbEntrySaved'));
+    showView('main');
+    switchTab('kb');
+  }
+
+  function deleteCurrentKBEntry() {
+    if (!state.currentKBEntryId) return;
+    showConfirm(t('deleteKBConfirm'), t('deleteConfirmText'), async () => {
+      await StorageAPI.deleteKBEntry(state.currentKBEntryId);
+      state.currentKBEntryId = null;
+      await loadData();
+      showView('main');
+      switchTab('kb');
+      showToast(t('kbEntryDeleted'));
+    });
+  }
+
+  async function toggleKBPinCurrent() {
+    if (!state.currentKBEntryId) return;
+    await StorageAPI.toggleKBPin(state.currentKBEntryId);
+    await loadData();
+    openKBEntry(state.currentKBEntryId);
+  }
+
+  function copyCurrentKBEntry() {
+    const entry = (state.knowledgeBase || []).find(e => e.id === state.currentKBEntryId);
+    if (!entry) return;
+    copyKBEntryText(entry);
+  }
+
+  function getEffectiveKBLimit() {
+    return isPro() ? Infinity : StorageAPI.FREE_KB_LIMIT;
+  }
+
   // ---- Account & Auth ----
   function isPro() {
     return state.plan === 'pro';
@@ -679,6 +1001,7 @@
       // Re-render current view to reflect plan changes
       if (state.currentView === 'main') {
         if (state.activeTab === 'notes') renderNotes();
+        else if (state.activeTab === 'kb') renderKB();
         else renderMain();
       }
     });
@@ -1069,11 +1392,20 @@
     $$('[data-i18n]').forEach(el => {
       el.textContent = t(el.dataset.i18n);
     });
-    els.searchInput.placeholder = state.activeTab === 'notes' ? t('searchNotesPlaceholder') : t('searchPlaceholder');
+    if (state.activeTab === 'kb') {
+      els.searchInput.placeholder = t('searchKBPlaceholder');
+    } else if (state.activeTab === 'notes') {
+      els.searchInput.placeholder = t('searchNotesPlaceholder');
+    } else {
+      els.searchInput.placeholder = t('searchPlaceholder');
+    }
     els.newScriptBtn.textContent = t('newScript');
     els.editorTitleInput.placeholder = t('scriptTitlePlaceholder');
     els.editorTagsInput.placeholder = t('tagsPlaceholder');
     els.editorBodyInput.dataset.placeholder = t('scriptBodyPlaceholder');
+    els.kbEditorTitleInput.placeholder = t('kbEntryTitlePlaceholder');
+    els.kbEditorTagsInput.placeholder = t('tagsPlaceholder');
+    els.kbEditorBodyInput.dataset.placeholder = t('kbBodyPlaceholder');
   }
 
   // ---- Copy ----
@@ -1571,7 +1903,17 @@
 
     // Escape: go back
     if (e.key === 'Escape') {
-      if (state.currentView === 'note') {
+      if (state.currentView === 'kbDetail') {
+        showView('main');
+        switchTab('kb');
+      } else if (state.currentView === 'kbEditor') {
+        if (state.editingKBEntryId) {
+          openKBEntry(state.editingKBEntryId);
+        } else {
+          showView('main');
+          switchTab('kb');
+        }
+      } else if (state.currentView === 'note') {
         showView('main');
         switchTab('notes');
       } else if (state.currentView === 'script') {
@@ -1599,6 +1941,8 @@
         state.searchQuery = '';
         if (state.activeTab === 'notes') {
           renderNotes();
+        } else if (state.activeTab === 'kb') {
+          renderKB();
         } else {
           renderMain();
         }
@@ -1660,6 +2004,8 @@
     // Focus back to the correct editor
     if (state.currentView === 'branchingEditor') {
       els.nodeEditorBody.focus();
+    } else if (state.currentView === 'kbEditor') {
+      els.kbEditorBodyInput.focus();
     } else {
       els.editorBodyInput.focus();
     }
@@ -1673,6 +2019,8 @@
       state.selectedIndex = -1;
       if (state.activeTab === 'notes') {
         renderNotes();
+      } else if (state.activeTab === 'kb') {
+        renderKB();
       } else {
         renderMain();
       }
@@ -1681,6 +2029,41 @@
     // Tabs
     els.scriptsTab.addEventListener('click', () => switchTab('scripts'));
     els.notesTab.addEventListener('click', () => switchTab('notes'));
+    els.kbTab.addEventListener('click', () => switchTab('kb'));
+
+    // KB filter chips
+    els.kbFilterChips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.kb-chip');
+      if (!chip) return;
+      state.kbCategoryFilter = chip.dataset.category;
+      renderKB();
+    });
+
+    // KB events
+    els.newKBEntryBtn.addEventListener('click', () => {
+      if (!isPro() && (state.knowledgeBase || []).length >= StorageAPI.FREE_KB_LIMIT) {
+        showToast(t('kbLimitWarning'));
+        return;
+      }
+      openKBEditor(null);
+    });
+    els.kbDetailBackBtn.addEventListener('click', () => {
+      showView('main');
+      switchTab('kb');
+    });
+    els.copyKBEntryBtn.addEventListener('click', copyCurrentKBEntry);
+    els.editKBEntryBtn.addEventListener('click', () => openKBEditor(state.currentKBEntryId));
+    els.pinKBEntryBtn.addEventListener('click', toggleKBPinCurrent);
+    els.deleteKBEntryBtn.addEventListener('click', deleteCurrentKBEntry);
+    els.kbEditorBackBtn.addEventListener('click', () => {
+      if (state.editingKBEntryId) {
+        openKBEntry(state.editingKBEntryId);
+      } else {
+        showView('main');
+        switchTab('kb');
+      }
+    });
+    els.saveKBEntryBtn.addEventListener('click', saveKBEntry);
 
     // Notes
     els.quickNoteSave.addEventListener('click', quickAddNote);

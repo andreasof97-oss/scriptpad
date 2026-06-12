@@ -3,6 +3,7 @@
 const SearchEngine = (() => {
   let scripts = [];
   let notes = [];
+  let kbEntries = [];
 
   function setScripts(allScripts) {
     scripts = allScripts;
@@ -10,6 +11,10 @@ const SearchEngine = (() => {
 
   function setNotes(allNotes) {
     notes = allNotes;
+  }
+
+  function setKB(allKB) {
+    kbEntries = allKB;
   }
 
   // Simple fuzzy match — checks if all characters of the pattern appear in order in the text
@@ -120,5 +125,27 @@ const SearchEngine = (() => {
     return results;
   }
 
-  return { setScripts, setNotes, search, searchNotes };
+  function searchKB(query) {
+    if (!query || query.trim() === '') return kbEntries;
+
+    const pattern = query.trim();
+
+    const results = kbEntries
+      .map(entry => {
+        const titleScore = fuzzyScore(pattern, entry.title) * 3;
+        const bodyScore = fuzzyScore(pattern, stripHtml(entry.body)) * 1;
+        const tagScore = (entry.tags || []).reduce((max, tag) =>
+          Math.max(max, fuzzyScore(pattern, tag)), 0) * 2;
+        const categoryScore = fuzzyScore(pattern, entry.category) * 1.5;
+        const totalScore = titleScore + bodyScore + tagScore + categoryScore;
+        return { entry, score: totalScore };
+      })
+      .filter(r => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(r => r.entry);
+
+    return results;
+  }
+
+  return { setScripts, setNotes, setKB, search, searchNotes, searchKB };
 })();
