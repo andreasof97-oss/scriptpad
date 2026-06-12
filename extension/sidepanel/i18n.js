@@ -246,6 +246,22 @@ const translations = {
     deleteKBConfirm: 'Delete this KB entry?',
     copyKBEntry: 'Copy Entry',
 
+    // AI Assistant
+    aiAskBtn: '🤖 Ask AI',
+    aiAssistant: 'AI Assistant',
+    aiPlaceholder: 'Ask about products, offers, retention...',
+    aiPoweredBy: 'Powered by AI • Your data stays local',
+    aiClearChat: 'Clear chat',
+    aiTyping: 'Thinking...',
+    aiErrorNetwork: 'Connection error. Check your internet and try again.',
+    aiErrorAPI: 'Something went wrong. Please try again.',
+    aiErrorEmptyKB: 'Your Knowledge Base is empty. Add some entries first to get AI recommendations.',
+    aiErrorTimeout: 'Request timed out. Try a shorter question.',
+    aiQueriesRemaining: 'questions remaining today',
+    aiLimitReached: 'Daily AI limit reached',
+    aiLimitHint: 'Upgrade to Pro for unlimited AI questions',
+    aiUpgradePrompt: 'Upgrade to Pro ⚡',
+
     // Misc
     updatedAgo: 'Updated',
     justNow: 'just now',
@@ -499,6 +515,22 @@ const translations = {
     kbBodyPlaceholder: 'Escribe el contenido de la entrada aquí...',
     deleteKBConfirm: '¿Eliminar esta entrada?',
     copyKBEntry: 'Copiar Entrada',
+
+    // AI Assistant
+    aiAskBtn: '🤖 Pregunta a la IA',
+    aiAssistant: 'Asistente IA',
+    aiPlaceholder: 'Pregunta sobre productos, ofertas, retención...',
+    aiPoweredBy: 'Impulsado por IA • Tus datos se quedan locales',
+    aiClearChat: 'Limpiar chat',
+    aiTyping: 'Pensando...',
+    aiErrorNetwork: 'Error de conexión. Revisa tu internet e intenta de nuevo.',
+    aiErrorAPI: 'Algo salió mal. Intenta de nuevo.',
+    aiErrorEmptyKB: 'Tu Base de Conocimiento está vacía. Agrega entradas primero para obtener recomendaciones.',
+    aiErrorTimeout: 'Tiempo de espera agotado. Intenta con una pregunta más corta.',
+    aiQueriesRemaining: 'preguntas restantes hoy',
+    aiLimitReached: 'Límite diario de IA alcanzado',
+    aiLimitHint: 'Actualiza a Pro para preguntas de IA ilimitadas',
+    aiUpgradePrompt: 'Actualiza a Pro ⚡',
 
     // Misc
     updatedAgo: 'Actualizado',

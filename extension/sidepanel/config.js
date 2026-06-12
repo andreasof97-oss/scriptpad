@@ -13,5 +13,8 @@ const CONFIG = {
 
   // PayPal webhook endpoint (Supabase Edge Function)
   PAYPAL_WEBHOOK_URL: 'https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/smart-processor',
-  PAYPAL_CREATE_SUBSCRIPTION_URL: 'https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/paypal-create-subscription'
+  PAYPAL_CREATE_SUBSCRIPTION_URL: 'https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/paypal-create-subscription',
+
+  // AI Assistant
+  AI_ASSISTANT_URL: 'https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/ai-assistant'
 };

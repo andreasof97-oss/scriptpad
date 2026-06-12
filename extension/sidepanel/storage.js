@@ -18,6 +18,7 @@ const StorageAPI = (() => {
   const FREE_SCRIPT_LIMIT = 15;
   const FREE_FOLDER_LIMIT = 5;
   const FREE_KB_LIMIT = 20;
+  const FREE_AI_QUERIES_PER_DAY = 5;
 
   // ---- Generic helpers ----
 
@@ -611,11 +612,52 @@ const StorageAPI = (() => {
     console.log('[ScriptPad] Added KB seed data (4 entries)');
   }
 
+  // ---- AI Usage Tracking ----
+
+  function getTodayDateStr() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  async function getAIUsage() {
+    return new Promise((resolve) => {
+      storage.get(['aiQueriesUsed', 'aiQueriesDate'], (data) => {
+        const today = getTodayDateStr();
+        if (data.aiQueriesDate !== today) {
+          // Reset for new day
+          resolve({ used: 0, date: today });
+        } else {
+          resolve({ used: data.aiQueriesUsed || 0, date: today });
+        }
+      });
+    });
+  }
+
+  async function incrementAIUsage() {
+    const usage = await getAIUsage();
+    const newUsed = usage.used + 1;
+    return new Promise((resolve) => {
+      storage.set({ aiQueriesUsed: newUsed, aiQueriesDate: usage.date }, () => {
+        resolve({ used: newUsed, date: usage.date });
+      });
+    });
+  }
+
+  async function canUseAI(isPro) {
+    if (isPro) return true;
+    const usage = await getAIUsage();
+    return usage.used < FREE_AI_QUERIES_PER_DAY;
+  }
+
   return {
     FREE_NOTE_LIMIT,
     FREE_SCRIPT_LIMIT,
     FREE_FOLDER_LIMIT,
     FREE_KB_LIMIT,
+    FREE_AI_QUERIES_PER_DAY,
     getAll,
     getScripts,
     getScript,
@@ -643,6 +685,9 @@ const StorageAPI = (() => {
     updateSettings,
     exportData,
     importData,
-    seedIfEmpty
+    seedIfEmpty,
+    getAIUsage,
+    incrementAIUsage,
+    canUseAI
   };
 })();

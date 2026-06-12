@@ -523,6 +523,47 @@
       </div>
     </div>
 
+    <!-- AI ASSISTANT FLOATING BUTTON -->
+    <button class="ai-fab" id="aiFab" title="Ask AI">🤖</button>
+
+    <!-- AI ASSISTANT PANEL -->
+    <div class="ai-panel" id="aiPanel">
+      <div class="ai-panel-header">
+        <div class="ai-panel-header-left">
+          <span class="ai-panel-title">🤖 <span data-i18n="aiAssistant">AI Assistant</span></span>
+          <span class="ai-queries-badge" id="aiQueriesBadge"></span>
+        </div>
+        <div class="ai-panel-header-right">
+          <button class="ai-clear-btn" id="aiClearBtn" data-i18n="aiClearChat">Clear chat</button>
+          <button class="ai-close-btn" id="aiCloseBtn">✕</button>
+        </div>
+      </div>
+      <div class="ai-messages" id="aiMessages">
+        <!-- Chat messages rendered here -->
+      </div>
+      <div class="ai-typing" id="aiTyping" style="display:none">
+        <div class="ai-typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="ai-typing-text" data-i18n="aiTyping">Thinking...</span>
+      </div>
+      <!-- Limit reached overlay -->
+      <div class="ai-limit-overlay" id="aiLimitOverlay" style="display:none">
+        <div class="ai-limit-icon">🔒</div>
+        <strong id="aiLimitTitle" data-i18n="aiLimitReached">Daily AI limit reached</strong>
+        <span id="aiLimitHint" data-i18n="aiLimitHint">Upgrade to Pro for unlimited AI questions</span>
+        <button class="upgrade-btn ai-upgrade-btn" id="aiUpgradeBtn" data-i18n="aiUpgradePrompt">Upgrade to Pro ⚡</button>
+      </div>
+      <div class="ai-input-area" id="aiInputArea">
+        <textarea class="ai-input" id="aiInput" placeholder="Ask about products, offers, retention..." rows="1"></textarea>
+        <button class="ai-send-btn" id="aiSendBtn" disabled>➤</button>
+      </div>
+      <div class="ai-disclaimer" data-i18n="aiPoweredBy">Powered by AI • Your data stays local</div>
+    </div>
+
+    <!-- AI Panel backdrop -->
+    <div class="ai-backdrop" id="aiBackdrop"></div>
+
     <!-- FOLDER VIEW -->
     <div id="folderView" class="view">
       <header class="folder-view-header">

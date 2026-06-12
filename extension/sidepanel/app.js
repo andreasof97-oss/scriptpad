@@ -20,6 +20,11 @@
     editingScriptId: null, // null = new, string = editing existing
     selectedIndex: -1,
     searchQuery: '',
+    // AI Assistant state
+    aiPanelOpen: false,
+    aiMessages: [],      // { role: 'user'|'assistant', content: string }
+    aiLoading: false,
+    aiError: null,
     // Branching viewer state
     branchingPath: [],       // array of node IDs visited
     currentNodeId: null,
@@ -202,6 +207,20 @@
     upgradeBackBtn: $('#upgradeBackBtn'),
     subscribeMonthlyBtn: $('#subscribeMonthlyBtn'),
     subscribeAnnualBtn: $('#subscribeAnnualBtn'),
+    // AI Assistant
+    aiFab: $('#aiFab'),
+    aiPanel: $('#aiPanel'),
+    aiMessages: $('#aiMessages'),
+    aiTyping: $('#aiTyping'),
+    aiInput: $('#aiInput'),
+    aiSendBtn: $('#aiSendBtn'),
+    aiCloseBtn: $('#aiCloseBtn'),
+    aiClearBtn: $('#aiClearBtn'),
+    aiQueriesBadge: $('#aiQueriesBadge'),
+    aiLimitOverlay: $('#aiLimitOverlay'),
+    aiUpgradeBtn: $('#aiUpgradeBtn'),
+    aiInputArea: $('#aiInputArea'),
+    aiBackdrop: $('#aiBackdrop'),
     // Toast & confirm
     toast: $('#toast'),
     overlay: $('#overlay'),
@@ -1406,6 +1425,9 @@
     els.kbEditorTitleInput.placeholder = t('kbEntryTitlePlaceholder');
     els.kbEditorTagsInput.placeholder = t('tagsPlaceholder');
     els.kbEditorBodyInput.dataset.placeholder = t('kbBodyPlaceholder');
+    // AI Assistant
+    els.aiInput.placeholder = t('aiPlaceholder');
+    els.aiFab.title = t('aiAskBtn');
   }
 
   // ---- Copy ----
@@ -1892,6 +1914,299 @@
     renderMain();
   }
 
+  // ---- AI Assistant ----
+
+  // Strip HTML tags from a string
+  function stripHtml(html) {
+    if (!html) return '';
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  // Build KB context string for AI prompt
+  function buildKBContext() {
+    const entries = state.knowledgeBase || [];
+    if (entries.length === 0) return '';
+
+    // Group by category
+    const groups = {};
+    entries.forEach(entry => {
+      const cat = (entry.category || 'custom').toUpperCase();
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(entry);
+    });
+
+    let context = '=== KNOWLEDGE BASE ===\n';
+    for (const [category, items] of Object.entries(groups)) {
+      context += `\n[${category}]\n\n`;
+      items.forEach(item => {
+        context += `**${item.title}**\n`;
+        context += stripHtml(item.body) + '\n\n';
+      });
+    }
+    context += '=== END KNOWLEDGE BASE ===';
+    return context;
+  }
+
+  // Markdown-lite parser for AI responses
+  function parseAIResponse(text) {
+    if (!text) return '';
+    // Escape HTML
+    let html = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Bold: **text**
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic: *text*
+    html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    // Inline code: `code`
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bullet points: lines starting with - or •
+    const lines = html.split('\n');
+    let result = '';
+    let inList = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const bulletMatch = trimmed.match(/^[-•]\s+(.*)/);
+      if (bulletMatch) {
+        if (!inList) {
+          result += '<ul>';
+          inList = true;
+        }
+        result += `<li>${bulletMatch[1]}</li>`;
+      } else {
+        if (inList) {
+          result += '</ul>';
+          inList = false;
+        }
+        if (trimmed === '') {
+          result += '<br>';
+        } else {
+          result += trimmed + '<br>';
+        }
+      }
+    }
+    if (inList) result += '</ul>';
+
+    // Clean up trailing <br>
+    result = result.replace(/(<br>)+$/, '');
+    return result;
+  }
+
+  // Toggle AI panel
+  function toggleAIPanel(forceOpen) {
+    const open = forceOpen !== undefined ? forceOpen : !state.aiPanelOpen;
+    state.aiPanelOpen = open;
+
+    if (open) {
+      els.aiPanel.classList.add('open');
+      els.aiBackdrop.classList.add('active');
+      els.aiFab.classList.add('hidden');
+      updateAIQueriesBadge();
+      renderAIMessages();
+      // Focus input after animation
+      setTimeout(() => els.aiInput.focus(), 350);
+    } else {
+      els.aiPanel.classList.remove('open');
+      els.aiBackdrop.classList.remove('active');
+      els.aiFab.classList.remove('hidden');
+    }
+  }
+
+  async function updateAIQueriesBadge() {
+    if (isPro()) {
+      els.aiQueriesBadge.textContent = '';
+      els.aiLimitOverlay.style.display = 'none';
+      els.aiInputArea.style.display = '';
+      return;
+    }
+
+    const usage = await StorageAPI.getAIUsage();
+    const remaining = Math.max(0, StorageAPI.FREE_AI_QUERIES_PER_DAY - usage.used);
+    els.aiQueriesBadge.textContent = `${remaining} ${t('aiQueriesRemaining')}`;
+
+    if (remaining <= 0) {
+      els.aiLimitOverlay.style.display = 'flex';
+      els.aiInputArea.style.display = 'none';
+    } else {
+      els.aiLimitOverlay.style.display = 'none';
+      els.aiInputArea.style.display = '';
+    }
+  }
+
+  function renderAIMessages() {
+    const container = els.aiMessages;
+    container.innerHTML = '';
+
+    if (state.aiMessages.length === 0) {
+      container.innerHTML = `<div class="ai-welcome">
+        <div class="ai-welcome-icon">\ud83e\udd16</div>
+        <div class="ai-welcome-title">${t('aiAssistant')}</div>
+        <div class="ai-welcome-hint">${t('aiPlaceholder')}</div>
+      </div>`;
+      return;
+    }
+
+    state.aiMessages.forEach(msg => {
+      const div = document.createElement('div');
+      if (msg.role === 'user') {
+        div.className = 'ai-msg user';
+        div.textContent = msg.content;
+      } else if (msg.role === 'error') {
+        div.className = 'ai-msg error';
+        div.textContent = msg.content;
+      } else {
+        div.className = 'ai-msg assistant';
+        div.innerHTML = parseAIResponse(msg.content);
+      }
+      container.appendChild(div);
+    });
+
+    // Auto-scroll to bottom
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function clearAIChat() {
+    state.aiMessages = [];
+    state.aiError = null;
+    renderAIMessages();
+  }
+
+  async function sendAIMessage() {
+    const message = els.aiInput.value.trim();
+    if (!message || state.aiLoading) return;
+
+    // Check usage limit
+    const canUse = await StorageAPI.canUseAI(isPro());
+    if (!canUse) {
+      await updateAIQueriesBadge();
+      return;
+    }
+
+    // Check if KB is empty
+    const kbEntries = state.knowledgeBase || [];
+    if (kbEntries.length === 0) {
+      state.aiMessages.push({ role: 'error', content: t('aiErrorEmptyKB') });
+      renderAIMessages();
+      return;
+    }
+
+    // Add user message
+    state.aiMessages.push({ role: 'user', content: message });
+    els.aiInput.value = '';
+    els.aiInput.style.height = 'auto';
+    renderAIMessages();
+
+    // Show loading
+    state.aiLoading = true;
+    els.aiSendBtn.disabled = true;
+    els.aiTyping.style.display = 'flex';
+
+    // Build context & history
+    const context = buildKBContext();
+    const history = state.aiMessages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .slice(-6)
+      .slice(0, -1); // exclude current message from history
+
+    // Stream the response
+    let abortController = new AbortController();
+    let timeoutId = setTimeout(() => abortController.abort(), 30000);
+
+    try {
+      const response = await fetch(CONFIG.AI_ASSISTANT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, context, history }),
+        signal: abortController.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API ${response.status}`);
+      }
+
+      // Increment usage
+      await StorageAPI.incrementAIUsage();
+      await updateAIQueriesBadge();
+
+      // Create placeholder for assistant message
+      const assistantMsg = { role: 'assistant', content: '' };
+      state.aiMessages.push(assistantMsg);
+      renderAIMessages();
+
+      // Read the SSE stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              assistantMsg.content += parsed.content;
+              // Update the last message in DOM directly for streaming
+              const lastBubble = els.aiMessages.querySelector('.ai-msg.assistant:last-child');
+              if (lastBubble) {
+                lastBubble.innerHTML = parseAIResponse(assistantMsg.content);
+              }
+              els.aiMessages.scrollTop = els.aiMessages.scrollHeight;
+            }
+          } catch {
+            // Skip malformed chunks
+          }
+        }
+      }
+
+      // Final render to ensure consistency
+      renderAIMessages();
+
+    } catch (err) {
+      console.error('[ScriptPad] AI error:', err);
+      let errorMsg;
+      if (err.name === 'AbortError') {
+        errorMsg = t('aiErrorTimeout');
+      } else if (err.message && err.message.includes('Failed to fetch')) {
+        errorMsg = t('aiErrorNetwork');
+      } else {
+        errorMsg = t('aiErrorAPI');
+      }
+      state.aiMessages.push({ role: 'error', content: errorMsg });
+      renderAIMessages();
+    } finally {
+      state.aiLoading = false;
+      els.aiSendBtn.disabled = !els.aiInput.value.trim();
+      els.aiTyping.style.display = 'none';
+    }
+  }
+
+  // Auto-resize AI textarea
+  function autoResizeAIInput() {
+    const el = els.aiInput;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 72) + 'px';
+    els.aiSendBtn.disabled = !el.value.trim() || state.aiLoading;
+  }
+
   // ---- Keyboard Navigation ----
   function handleKeyboard(e) {
     // "/" to focus search
@@ -1901,8 +2216,12 @@
       return;
     }
 
-    // Escape: go back
+    // Escape: close AI panel first, then go back
     if (e.key === 'Escape') {
+      if (state.aiPanelOpen) {
+        toggleAIPanel(false);
+        return;
+      }
       if (state.currentView === 'kbDetail') {
         showView('main');
         switchTab('kb');
@@ -2215,6 +2534,24 @@
       els.overlay.classList.remove('active');
       if (confirmCallback) confirmCallback();
       confirmCallback = null;
+    });
+
+    // ---- AI Assistant events ----
+    els.aiFab.addEventListener('click', () => toggleAIPanel(true));
+    els.aiCloseBtn.addEventListener('click', () => toggleAIPanel(false));
+    els.aiBackdrop.addEventListener('click', () => toggleAIPanel(false));
+    els.aiClearBtn.addEventListener('click', clearAIChat);
+    els.aiUpgradeBtn.addEventListener('click', () => {
+      toggleAIPanel(false);
+      openUpgrade();
+    });
+    els.aiSendBtn.addEventListener('click', sendAIMessage);
+    els.aiInput.addEventListener('input', autoResizeAIInput);
+    els.aiInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAIMessage();
+      }
     });
 
     // Keyboard
