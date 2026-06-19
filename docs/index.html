@@ -40,7 +40,7 @@
       "priceCurrency": "USD"
     },
     "installUrl": "https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik",
-    "softwareVersion": "1.2.0",
+    "softwareVersion": "2.5.0",
     "inLanguage": ["en", "es"],
     "aggregateRating": {
       "@type": "AggregateRating",
@@ -419,6 +419,107 @@
     footer a:hover { color: var(--accent); }
     .footer-links { display: flex; gap: 24px; justify-content: center; margin-top: 12px; }
 
+    /* ---- PRO SECTION ---- */
+    .pro-section {
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .pro-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: var(--radius);
+      padding: 48px;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .pro-card::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .pro-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .pro-price {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .pro-price small {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+    .pro-annual {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+    .pro-features-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 24px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .pro-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+    .pro-features-list li .pro-check {
+      color: var(--green);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .pro-features-list li .coming-soon {
+      font-size: 0.7rem;
+      background: rgba(234, 179, 8, 0.15);
+      color: #eab308;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .btn-pro {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      border: none; border-radius: 10px;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.3);
+    }
+    .btn-pro:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 40px rgba(139, 92, 246, 0.4);
+    }
+    @media (max-width: 768px) {
+      .pro-features-list { grid-template-columns: 1fr; }
+      .pro-card { padding: 32px 24px; }
+    }
+
     /* ---- ANIMATIONS ---- */
     .reveal {
       opacity: 0;
@@ -572,6 +673,51 @@
         <h3 data-i18n="f12Title">100% Private</h3>
         <p data-i18n="f12Desc">Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.</p>
       </div>
+      <div class="feature-card reveal">
+        <span class="new-badge">NEW</span>
+        <span class="feature-icon">📝</span>
+        <h3 data-i18n="f13Title">Notes</h3>
+        <p data-i18n="f13Desc">Quick reference notes right in the side panel. Jot down talking points, rebuttals, or reminders between calls. Organized and searchable.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="new-badge">NEW</span>
+        <span class="feature-icon">📚</span>
+        <h3 data-i18n="f14Title">Knowledge Base</h3>
+        <p data-i18n="f14Desc">Built-in product &amp; deal reference library. 5 categories: Products, Bundles, Retention, Objections, Custom. Color-coded, searchable, pin important entries. Import/export supported.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="new-badge">NEW</span>
+        <span class="feature-icon">🤖</span>
+        <h3 data-i18n="f15Title">AI Smart Assistant</h3>
+        <p data-i18n="f15Desc">Ask questions about your Knowledge Base and get instant AI-powered recommendations. "Customer wants a cheap plan?" → AI finds the best match from your KB. Free tier: 5 queries/day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRO FEATURES -->
+<section class="pro-section" id="pro">
+  <div class="container center">
+    <div class="reveal">
+      <p class="section-label" data-i18n="proLabel">Upgrade</p>
+      <h2 class="section-title" data-i18n="proTitle">Unlock the full power of ScriptPad</h2>
+      <p class="section-sub" data-i18n="proSub">Free is great. Pro is unstoppable.</p>
+    </div>
+    <div class="pro-card reveal">
+      <span class="pro-badge">⚡ Pro</span>
+      <div class="pro-price">$6<small>/mo</small></div>
+      <div class="pro-annual" data-i18n="proAnnual">or $49/year — save 32%</div>
+      <ul class="pro-features-list">
+        <li><span class="pro-check">✓</span> <span data-i18n="proF1">Unlimited scripts &amp; folders</span></li>
+        <li><span class="pro-check">✓</span> <span data-i18n="proF2">Unlimited notes</span></li>
+        <li><span class="pro-check">✓</span> <span data-i18n="proF3">Unlimited KB entries</span></li>
+        <li><span class="pro-check">✓</span> <span data-i18n="proF4">Unlimited AI queries</span></li>
+        <li><span class="pro-check">✓</span> <span data-i18n="proF5">Cloud sync</span> <span class="coming-soon" data-i18n="proSoon">COMING SOON</span></li>
+        <li><span class="pro-check">✓</span> <span data-i18n="proF6">Call tracker</span> <span class="coming-soon" data-i18n="proSoon2">COMING SOON</span></li>
+      </ul>
+      <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-pro">
+        🚀 <span data-i18n="proCta">Upgrade to Pro</span>
+      </a>
     </div>
   </div>
 </section>
@@ -660,7 +806,7 @@
   const translations = {
     en: {
       navCta: 'Add to Chrome',
-      heroBadge: 'Free Chrome Extension',
+      heroBadge: '✨ Now with AI — Free Chrome Extension',
       heroTitle: 'Your scripts. Always ready. One click away.',
       heroSub: 'The #1 script organizer for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.',
       heroCta: "Add to Chrome — It's Free",
@@ -689,6 +835,14 @@
       f10Title: 'Pin Favorites', f10Desc: 'Pin your most-used scripts to the top for instant access. Your go-to scripts, one click away.',
       f11Title: 'Rich Text Editor', f11Desc: 'Bold, italic, bullets, highlights. Format scripts exactly how you need them for quick scanning.',
       f12Title: '100% Private', f12Desc: 'Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.',
+      f13Title: 'Notes', f13Desc: 'Quick reference notes right in the side panel. Jot down talking points, rebuttals, or reminders between calls. Organized and searchable.',
+      f14Title: 'Knowledge Base', f14Desc: 'Built-in product & deal reference library. 5 categories: Products, Bundles, Retention, Objections, Custom. Color-coded, searchable, pin important entries. Import/export supported.',
+      f15Title: 'AI Smart Assistant', f15Desc: 'Ask questions about your Knowledge Base and get instant AI-powered recommendations. "Customer wants a cheap plan?" → AI finds the best match from your KB. Free tier: 5 queries/day.',
+      proLabel: 'Upgrade', proTitle: 'Unlock the full power of ScriptPad', proSub: 'Free is great. Pro is unstoppable.',
+      proAnnual: 'or $49/year — save 32%',
+      proF1: 'Unlimited scripts & folders', proF2: 'Unlimited notes', proF3: 'Unlimited KB entries', proF4: 'Unlimited AI queries', proF5: 'Cloud sync', proF6: 'Call tracker',
+      proSoon: 'COMING SOON', proSoon2: 'COMING SOON',
+      proCta: 'Upgrade to Pro',
       howLabel: 'How It Works',
       howTitle: 'Ready in under a minute',
       howSub: 'No sign-ups. No configuration. Just install and go.',
@@ -708,7 +862,7 @@
     },
     es: {
       navCta: 'Agregar a Chrome',
-      heroBadge: 'Extensión de Chrome Gratis',
+      heroBadge: '✨ Ahora con IA — Extensión de Chrome Gratis',
       heroTitle: 'Tus guiones. Siempre listos. A un clic.',
       heroSub: 'El organizador de guiones #1 para agentes de call center, telemarketers y representantes de ventas. Deja de buscar en Google Docs a media llamada — ScriptPad pone cada guión al alcance de tu mano.',
       heroCta: 'Agregar a Chrome — Es Gratis',
@@ -737,6 +891,14 @@
       f10Title: 'Fijar Favoritos', f10Desc: 'Fija tus guiones más usados arriba para acceso instantáneo. Tus guiones favoritos, a un clic.',
       f11Title: 'Editor de Texto Rico', f11Desc: 'Negrita, cursiva, viñetas, resaltado. Formatea guiones exactamente como los necesitas para escaneo rápido.',
       f12Title: '100% Privado', f12Desc: 'Todo almacenado localmente en tu dispositivo. Sin cuentas, sin servidores, sin rastreo. Tus guiones son tuyos.',
+      f13Title: 'Notas', f13Desc: 'Notas de referencia rápida directo en el panel lateral. Anota puntos de conversación, respuestas a objeciones o recordatorios entre llamadas. Organizadas y con búsqueda.',
+      f14Title: 'Base de Conocimiento', f14Desc: 'Biblioteca de referencia de productos y ofertas integrada. 5 categorías: Productos, Paquetes, Retención, Objeciones, Personalizado. Con colores, búsqueda, fija entradas importantes. Importar/exportar incluido.',
+      f15Title: 'Asistente IA Inteligente', f15Desc: 'Haz preguntas sobre tu Base de Conocimiento y obtén recomendaciones instantáneas con IA. "¿El cliente quiere un plan barato?" → La IA encuentra la mejor opción de tu KB. Nivel gratis: 5 consultas/día.',
+      proLabel: 'Mejora tu plan', proTitle: 'Desbloquea todo el poder de ScriptPad', proSub: 'Gratis está bien. Pro es imparable.',
+      proAnnual: 'o $49/año — ahorra 32%',
+      proF1: 'Guiones y carpetas ilimitados', proF2: 'Notas ilimitadas', proF3: 'Entradas de KB ilimitadas', proF4: 'Consultas de IA ilimitadas', proF5: 'Sincronización en la nube', proF6: 'Rastreador de llamadas',
+      proSoon: 'PRÓXIMAMENTE', proSoon2: 'PRÓXIMAMENTE',
+      proCta: 'Mejorar a Pro',
       howLabel: 'Cómo Funciona',
       howTitle: 'Listo en menos de un minuto',
       howSub: 'Sin registros. Sin configuración. Solo instala y listo.',
