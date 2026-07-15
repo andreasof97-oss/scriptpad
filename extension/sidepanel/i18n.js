@@ -201,6 +201,8 @@ const translations = {
     authErrorEmail: 'Please enter a valid email',
     authErrorPassword: 'Password must be at least 6 characters',
     authErrorNetwork: 'Connection error. Please try again.',
+    forgotPassword: 'Forgot password?',
+    resetEmailSent: 'Password reset email sent! Check your inbox.',
     signingIn: 'Signing in...',
     creatingAccount: 'Creating account...',
 
@@ -471,6 +473,8 @@ const translations = {
     authErrorEmail: 'Ingresa un correo válido',
     authErrorPassword: 'La contraseña debe tener al menos 6 caracteres',
     authErrorNetwork: 'Error de conexión. Intenta de nuevo.',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    resetEmailSent: '¡Correo de recuperación enviado! Revisa tu bandeja de entrada.',
     signingIn: 'Iniciando sesión...',
     creatingAccount: 'Creando cuenta...',
 

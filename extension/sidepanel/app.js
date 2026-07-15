@@ -203,6 +203,9 @@
     authError: $('#authError'),
     authSubmitBtn: $('#authSubmitBtn'),
     authToggleLink: $('#authToggleLink'),
+    authForgotLink: $('#authForgotLink'),
+    authForgotWrapper: $('#authForgotWrapper'),
+    authSuccess: $('#authSuccess'),
     // Upgrade view
     upgradeBackBtn: $('#upgradeBackBtn'),
     subscribeMonthlyBtn: $('#subscribeMonthlyBtn'),
@@ -1045,6 +1048,7 @@
     els.authEmailInput.value = '';
     els.authPasswordInput.value = '';
     els.authError.style.display = 'none';
+    els.authSuccess.style.display = 'none';
     updateAuthUI();
     showView('signIn');
     els.authEmailInput.focus();
@@ -1060,6 +1064,8 @@
     const toggleText = toggleLink.previousElementSibling;
     if (toggleText) toggleText.textContent = isSignup ? t('haveAccount') : t('noAccount');
     toggleLink.textContent = isSignup ? t('signInLink') : t('createAccount');
+    // Show forgot password only on sign-in mode
+    els.authForgotWrapper.style.display = isSignup ? 'none' : 'block';
   }
 
   function showAuthError(msg) {
@@ -2416,7 +2422,25 @@
       e.preventDefault();
       state.authMode = state.authMode === 'signin' ? 'signup' : 'signin';
       els.authError.style.display = 'none';
+      els.authSuccess.style.display = 'none';
       updateAuthUI();
+    });
+    els.authForgotLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = els.authEmailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        showAuthError(t('authErrorEmail'));
+        return;
+      }
+      els.authError.style.display = 'none';
+      els.authSuccess.style.display = 'none';
+      try {
+        await Auth.resetPassword(email);
+        els.authSuccess.textContent = t('resetEmailSent');
+        els.authSuccess.style.display = 'block';
+      } catch (err) {
+        showAuthError(err.message || t('authErrorNetwork'));
+      }
     });
     // Upgrade view
     els.upgradeBackBtn.addEventListener('click', () => showView('settings'));

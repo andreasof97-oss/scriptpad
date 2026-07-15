@@ -97,6 +97,12 @@ const Auth = (() => {
     notifyChange();
   }
 
+  async function resetPassword(email) {
+    const { data, error } = await client.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+    return data;
+  }
+
   function getUser() {
     return currentUser;
   }
@@ -121,6 +127,7 @@ const Auth = (() => {
     signIn,
     signUp,
     signOut,
+    resetPassword,
     getUser,
     getPlan,
     isPro,
