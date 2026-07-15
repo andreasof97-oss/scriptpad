@@ -1104,10 +1104,17 @@
       showToast(t('signIn') + ' ✓');
     } catch (err) {
       console.error('[ScriptPad] Auth error:', err);
-      if (err.message && err.message.includes('Invalid login')) {
+      const msg = (err.message || '').toLowerCase();
+      if (msg.includes('invalid login') || msg.includes('invalid email or password')) {
         showAuthError(t('authErrorInvalid'));
-      } else if (err.message && err.message.includes('already registered')) {
-        showAuthError(t('authErrorInvalid'));
+      } else if (msg.includes('already registered') || msg.includes('already been registered')) {
+        showAuthError(t('authErrorAlreadyRegistered'));
+      } else if (msg.includes('email not confirmed')) {
+        showAuthError(t('authErrorNotConfirmed'));
+      } else if (msg.includes('rate limit') || msg.includes('too many')) {
+        showAuthError(t('authErrorRateLimit'));
+      } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed')) {
+        showAuthError(t('authErrorNetwork'));
       } else {
         showAuthError(err.message || t('authErrorNetwork'));
       }
