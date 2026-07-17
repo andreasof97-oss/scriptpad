@@ -1455,6 +1455,7 @@
   // ---- Settings ----
   function openSettings() {
     renderFolderManager();
+    renderTemplatePacks();
     updateThemeButtons();
     updateLangButtons();
     showView('settings');
@@ -2594,6 +2595,114 @@
   }
 
   // ---- Bind Events ----
+  // ---- Template Packs ----
+  const TEMPLATE_PACKS = [
+    {
+      id: 'sales-starter',
+      icon: '💼',
+      nameKey: 'tplSalesName',
+      descKey: 'tplSalesDesc',
+      folders: ['Openers', 'Objection Handlers', 'Closers'],
+      scripts: [
+        { folder: 'Openers', title: 'Cold Call Opener', tags: ['cold-call', 'opener'], body: '<p><strong>"Hi [Name], this is [You] from [Company].</strong></p><p>The reason for my call — we help [target companies] reduce [pain point] by [benefit]. I\'d love 2 minutes to see if it\'s worth a longer chat. Sound fair?"</p>' },
+        { folder: 'Openers', title: 'Warm Referral Opener', tags: ['referral', 'warm'], body: '<p><strong>"Hi [Name], [Referrer] suggested I reach out.</strong></p><p>They mentioned you might be looking at [solution area]. I help companies like yours with [benefit] — do you have a quick minute?"</p>' },
+        { folder: 'Objection Handlers', title: 'Too Expensive', tags: ['price', 'objection'], body: '<p><strong>"I totally understand budget is a concern."</strong></p><p>"Just so I understand — is it that the price is higher than expected, or that you\'re not sure about the ROI?"</p><p><em>If ROI:</em> "What if I could show you how [Client X] saved [amount] in the first 3 months?"</p><p><em>If budget:</em> "We have flexible options — let me walk you through what fits."</p>' },
+        { folder: 'Objection Handlers', title: 'Need to Think About It', tags: ['stall', 'objection'], body: '<p><strong>"Of course, I want you to feel 100% good about this."</strong></p><p>"Just so I can help — is there a specific concern, or do you need to loop in someone else?"</p><p><em>Then:</em> "How about I send a quick summary and we reconnect [day]? That way it\'s fresh."</p>' },
+        { folder: 'Closers', title: 'Assumptive Close', tags: ['close', 'demo'], body: '<p><strong>"Great, sounds like this is a good fit."</strong></p><p>"Let me get you set up — I have availability [Day 1] at [Time] or [Day 2] at [Time] for the demo. Which works better?"</p><p><em>Confirm:</em> Repeat date, time, email. "You\'ll get a calendar invite in the next few minutes."</p>' },
+        { folder: 'Closers', title: 'Summary Close', tags: ['close', 'recap'], body: '<p><strong>"Let me make sure I have everything right:"</strong></p><ul><li>You need [solution] by [timeline]</li><li>Budget is around [range]</li><li>[Decision maker] needs to sign off</li></ul><p>"Based on all that, here\'s what I recommend: [plan]. Want me to send over the proposal?"</p>' }
+      ]
+    },
+    {
+      id: 'customer-service',
+      icon: '📞',
+      nameKey: 'tplServiceName',
+      descKey: 'tplServiceDesc',
+      folders: ['Greetings', 'Troubleshooting', 'Escalation'],
+      scripts: [
+        { folder: 'Greetings', title: 'Standard Greeting', tags: ['greeting', 'inbound'], body: '<p><strong>"Thank you for calling [Company], my name is [You]. How can I help you today?"</strong></p><p><em>Listen actively, then:</em> "I understand — let me look into that for you right away."</p>' },
+        { folder: 'Greetings', title: 'Returning Customer', tags: ['greeting', 'returning'], body: '<p><strong>"Welcome back to [Company]! I can see you\'ve been with us since [date]."</strong></p><p>"How can I help you today?"</p><p><em>Acknowledge loyalty:</em> "We really appreciate you being a customer."</p>' },
+        { folder: 'Troubleshooting', title: 'Technical Issue Flow', tags: ['tech', 'troubleshoot'], body: '<p><strong>Step 1:</strong> "Can you describe exactly what\'s happening?"</p><p><strong>Step 2:</strong> "Have you tried restarting [device/app]?"</p><p><strong>Step 3:</strong> "Let me walk you through a fix — this usually works."</p><p><strong>If unresolved:</strong> "I\'m going to escalate this to our specialist team. You\'ll hear back within [timeframe]."</p>' },
+        { folder: 'Escalation', title: 'Angry Customer De-escalation', tags: ['angry', 'escalation'], body: '<p><strong>1. Acknowledge:</strong> "I completely understand your frustration, and I\'m sorry you\'re dealing with this."</p><p><strong>2. Own it:</strong> "Let me take responsibility for getting this resolved."</p><p><strong>3. Act:</strong> "Here\'s what I\'m going to do right now: [specific action]."</p><p><strong>4. Follow up:</strong> "I\'ll personally make sure this gets handled. Can I call you back at [time] with an update?"</p>' }
+      ]
+    },
+    {
+      id: 'insurance',
+      icon: '🏥',
+      nameKey: 'tplInsuranceName',
+      descKey: 'tplInsuranceDesc',
+      folders: ['Quoting', 'Objections', 'Follow-ups'],
+      scripts: [
+        { folder: 'Quoting', title: 'Needs Assessment', tags: ['quote', 'assessment'], body: '<p><strong>"To find you the best rate, I need to ask a few quick questions:"</strong></p><ul><li>"What type of coverage are you looking for?"</li><li>"Who needs to be covered?"</li><li>"What\'s your current monthly budget for insurance?"</li><li>"Any pre-existing conditions or special requirements?"</li></ul><p>"Great — give me 60 seconds to pull up some options."</p>' },
+        { folder: 'Objections', title: 'Already Have Insurance', tags: ['objection', 'competitor'], body: '<p><strong>"That\'s great that you\'re already covered!"</strong></p><p>"A lot of our customers came from [competitor] and found they were paying more for less. Would you be open to a free comparison? It takes 5 minutes and there\'s zero obligation."</p>' },
+        { folder: 'Follow-ups', title: 'Quote Follow-up Call', tags: ['follow-up', 'quote'], body: '<p><strong>"Hi [Name], it\'s [You] from [Company]. I\'m following up on the quote we discussed."</strong></p><p>"Were you able to review the options? Any questions I can answer?"</p><p><em>If ready:</em> "Great, let\'s get you enrolled — it only takes a few minutes."</p><p><em>If not:</em> "No rush at all. What\'s the best time for me to check back?"</p>' }
+      ]
+    }
+  ];
+
+  function renderTemplatePacks() {
+    const container = document.getElementById('templatePacksList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    TEMPLATE_PACKS.forEach(pack => {
+      const div = document.createElement('div');
+      div.className = 'template-pack-card';
+      div.innerHTML = `
+        <div class="template-pack-header">
+          <span class="template-pack-icon">${pack.icon}</span>
+          <div class="template-pack-info">
+            <div class="template-pack-name">${t(pack.nameKey)}</div>
+            <div class="template-pack-desc">${t(pack.descKey)}</div>
+          </div>
+        </div>
+        <button class="template-pack-btn">${t('loadPack')} (${pack.scripts.length} ${t('scriptsCount')})</button>
+      `;
+      div.querySelector('.template-pack-btn').addEventListener('click', async () => {
+        const btn = div.querySelector('.template-pack-btn');
+        btn.disabled = true;
+        btn.textContent = t('loading') + '...';
+        await loadTemplatePack(pack);
+        btn.textContent = '✓ ' + t('loaded');
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = t('loadPack') + ` (${pack.scripts.length} ${t('scriptsCount')})`;
+        }, 2000);
+      });
+      container.appendChild(div);
+    });
+  }
+
+  async function loadTemplatePack(pack) {
+    // Create folders if they don't exist
+    const existingFolders = state.folders;
+    const folderMap = {};
+    for (const folderName of pack.folders) {
+      let existing = existingFolders.find(f => f.name === folderName);
+      if (!existing) {
+        existing = await StorageAPI.createFolder(folderName);
+      }
+      folderMap[folderName] = existing.id;
+    }
+
+    // Create scripts
+    for (const s of pack.scripts) {
+      // Check if a script with same title already exists
+      const exists = state.scripts.find(sc => sc.title === s.title);
+      if (exists) continue; // Skip duplicates
+      await StorageAPI.createScript({
+        title: s.title,
+        body: s.body,
+        tags: s.tags,
+        folderId: folderMap[s.folder] || null,
+        type: 'standard'
+      });
+    }
+
+    // Reload data
+    await loadData();
+    showToast('✓ ' + t('packLoaded'));
+  }
+
   function bindEvents() {
     // Search
     els.searchInput.addEventListener('input', () => {
