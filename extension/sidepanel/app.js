@@ -3060,6 +3060,8 @@
 
     // Account & Auth
     els.signInBtn.addEventListener('click', openSignIn);
+    const teamsSignInBtn = document.getElementById('teamsSignInBtn');
+    if (teamsSignInBtn) teamsSignInBtn.addEventListener('click', openSignIn);
     els.signOutBtn.addEventListener('click', handleSignOut);
     if (els.changePwBtn) els.changePwBtn.addEventListener('click', handleChangePassword);
     els.upgradeFromSettings.addEventListener('click', openUpgrade);
