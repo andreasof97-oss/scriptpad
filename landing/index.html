@@ -1,4 +1,4 @@
-<!-- aha-build-id: bmrpfb4b913jwr9dj -->
+<!-- aha-build-id: bmrpg7zxz1pytppro -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,6 +112,20 @@
     }
     .nav-brand img { width: 32px; height: 32px; border-radius: 6px; }
     .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color .2s; }
+    .nav-link:hover { color: var(--text-primary); }
+    .faq-section { padding: 80px 0; }
+    .faq-list { max-width: 760px; margin: 32px auto 0; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 4px 20px; transition: border-color .2s; }
+    .faq-item[open] { border-color: var(--accent, #6c8cff); }
+    .faq-item summary { cursor: pointer; padding: 16px 0; font-weight: 600; color: var(--text-primary); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: '+'; font-size: 1.4rem; color: var(--text-secondary); transition: transform .2s; }
+    .faq-item[open] summary::after { content: '−'; }
+    .faq-item p { color: var(--text-secondary); line-height: 1.6; padding: 0 0 18px; margin: 0; }
+    .faq-contact { text-align: center; margin: 40px auto 0; max-width: 760px; }
+    .faq-contact p { color: var(--text-secondary); margin-bottom: 16px; font-size: 1.05rem; }
+    .faq-contact-btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
     .lang-toggle {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
@@ -617,6 +631,7 @@
       ScriptPad
     </a>
     <div class="nav-right">
+      <a href="#faq" class="nav-link" data-i18n="navHelp">Help</a>
       <button class="lang-toggle" id="langToggle" onclick="toggleLang()">ES 🌐</button>
       <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta">
         <span data-i18n="navCta">Add to Chrome</span>
@@ -862,6 +877,49 @@
   </div>
 </section>
 
+<!-- FAQ / HELP -->
+<section class="faq-section" id="faq">
+  <div class="container reveal">
+    <div class="section-label" data-i18n="faqLabel">Help &amp; FAQ</div>
+    <h2 class="section-title" data-i18n="faqTitle">Questions? We've got answers</h2>
+    <p class="section-sub" data-i18n="faqSub">Everything you need to know to get started with ScriptPad.</p>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary data-i18n="faqQ1">Is ScriptPad really free?</summary>
+        <p data-i18n="faqA1">Yes — the core extension is free. You can create scripts, organize folders, search, and use it on live calls at no cost. A Pro plan unlocks extras like unlimited scripts and team sharing.</p>
+      </details>
+      <details class="faq-item">
+        <summary data-i18n="faqQ2">Where are my scripts stored?</summary>
+        <p data-i18n="faqA2">Your scripts stay right on your device, in your browser. Nothing is sent to a server unless you sign in to sync or share with a team. Your data is yours.</p>
+      </details>
+      <details class="faq-item">
+        <summary data-i18n="faqQ3">How do I open ScriptPad during a call?</summary>
+        <p data-i18n="faqA3">Press Ctrl+Shift+S to pop open the side panel right next to your dialer or CRM. Use / to jump to search and arrow keys to move between scripts.</p>
+      </details>
+      <details class="faq-item">
+        <summary data-i18n="faqQ4">Can I share scripts with my team?</summary>
+        <p data-i18n="faqA4">Yes. With Teams, a manager creates a team, shares an invite code, and pushes scripts to everyone at once. Agents get updates instantly — sign in from Settings to get started.</p>
+      </details>
+      <details class="faq-item">
+        <summary data-i18n="faqQ5">Does it work in Spanish?</summary>
+        <p data-i18n="faqA5">Absolutely. The whole interface works in English and Spanish, and it auto-detects your browser language. You can switch anytime.</p>
+      </details>
+      <details class="faq-item">
+        <summary data-i18n="faqQ6">I forgot my password — what now?</summary>
+        <p data-i18n="faqA6">Use the “Forgot password?” link at the bottom of this page. We'll email you a reset link so you can set a new one.</p>
+      </details>
+    </div>
+    <div class="faq-contact">
+      <p data-i18n="faqContact">Still stuck or have an idea?</p>
+      <div class="faq-contact-btns">
+        <a class="btn-secondary" href="mailto:andreasof97@gmail.com?subject=ScriptPad%20Help" data-i18n="faqHelpBtn">✉️ Get Help</a>
+        <a class="btn-secondary" href="mailto:andreasof97@gmail.com?subject=ScriptPad%20Suggestion" data-i18n="faqSuggestBtn">💡 Send a Suggestion</a>
+        <a class="btn-secondary" href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik/reviews" target="_blank" data-i18n="faqReviewBtn">⭐ Leave a Review</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA BANNER -->
 <section class="cta-banner">
   <h2 data-i18n="ctaTitle">Ready to stop fumbling mid-call?</h2>
@@ -878,6 +936,7 @@
     <a href="https://andreasof97-oss.github.io/scriptpad/privacy-policy.html">Privacy Policy</a>
     <a href="https://github.com/andreasof97-oss/scriptpad" target="_blank">GitHub</a>
     <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank">Chrome Web Store</a>
+    <a href="#faq" data-i18n="navHelp">Help</a>
     <a href="#" id="forgotPwLink">Forgot password?</a>
   </div>
 </footer>
@@ -1080,7 +1139,27 @@
       privDesc: 'No accounts required. No data sent to servers. No tracking. ScriptPad stores everything locally in your browser. Your scripts are yours — period.',
       ctaTitle: 'Ready to stop fumbling mid-call?',
       ctaSub: 'Join agents who keep their scripts organized and ready.',
-      ctaCta: "Add to Chrome — It's Free"
+      ctaCta: "Add to Chrome — It's Free",
+      navHelp: 'Help',
+      faqLabel: 'Help & FAQ',
+      faqTitle: "Questions? We've got answers",
+      faqSub: 'Everything you need to know to get started with ScriptPad.',
+      faqQ1: 'Is ScriptPad really free?',
+      faqA1: 'Yes — the core extension is free. You can create scripts, organize folders, search, and use it on live calls at no cost. A Pro plan unlocks extras like unlimited scripts and team sharing.',
+      faqQ2: 'Where are my scripts stored?',
+      faqA2: 'Your scripts stay right on your device, in your browser. Nothing is sent to a server unless you sign in to sync or share with a team. Your data is yours.',
+      faqQ3: 'How do I open ScriptPad during a call?',
+      faqA3: 'Press Ctrl+Shift+S to pop open the side panel right next to your dialer or CRM. Use / to jump to search and arrow keys to move between scripts.',
+      faqQ4: 'Can I share scripts with my team?',
+      faqA4: 'Yes. With Teams, a manager creates a team, shares an invite code, and pushes scripts to everyone at once. Agents get updates instantly — sign in from Settings to get started.',
+      faqQ5: 'Does it work in Spanish?',
+      faqA5: 'Absolutely. The whole interface works in English and Spanish, and it auto-detects your browser language. You can switch anytime.',
+      faqQ6: 'I forgot my password — what now?',
+      faqA6: 'Use the “Forgot password?” link at the bottom of this page. We\'ll email you a reset link so you can set a new one.',
+      faqContact: 'Still stuck or have an idea?',
+      faqHelpBtn: '✉️ Get Help',
+      faqSuggestBtn: '💡 Send a Suggestion',
+      faqReviewBtn: '⭐ Leave a Review'
     },
     es: {
       navCta: 'Agregar a Chrome',
@@ -1142,7 +1221,27 @@
       privDesc: 'Sin cuentas requeridas. Sin datos enviados a servidores. Sin rastreo. ScriptPad almacena todo localmente en tu navegador. Tus guiones son tuyos — punto.',
       ctaTitle: '¿Listo para dejar de improvisar a media llamada?',
       ctaSub: 'Únete a los agentes que mantienen sus guiones organizados y listos.',
-      ctaCta: 'Agregar a Chrome — Es Gratis'
+      ctaCta: 'Agregar a Chrome — Es Gratis',
+      navHelp: 'Ayuda',
+      faqLabel: 'Ayuda y Preguntas',
+      faqTitle: '¿Preguntas? Aquí están las respuestas',
+      faqSub: 'Todo lo que necesitas saber para empezar con ScriptPad.',
+      faqQ1: '¿ScriptPad es realmente gratis?',
+      faqA1: 'Sí — la extensión principal es gratis. Puedes crear guiones, organizar carpetas, buscar y usarla en llamadas en vivo sin costo. El plan Pro desbloquea extras como guiones ilimitados y compartir en equipo.',
+      faqQ2: '¿Dónde se guardan mis guiones?',
+      faqA2: 'Tus guiones se quedan en tu dispositivo, en tu navegador. Nada se envía a un servidor a menos que inicies sesión para sincronizar o compartir con un equipo. Tus datos son tuyos.',
+      faqQ3: '¿Cómo abro ScriptPad durante una llamada?',
+      faqA3: 'Presiona Ctrl+Shift+S para abrir el panel lateral junto a tu marcador o CRM. Usa / para ir a la búsqueda y las flechas para moverte entre guiones.',
+      faqQ4: '¿Puedo compartir guiones con mi equipo?',
+      faqA4: 'Sí. Con Equipos, un gerente crea un equipo, comparte un código de invitación y envía guiones a todos a la vez. Los agentes reciben las actualizaciones al instante — inicia sesión desde Configuración para empezar.',
+      faqQ5: '¿Funciona en español?',
+      faqA5: 'Por supuesto. Toda la interfaz funciona en inglés y español, y detecta automáticamente el idioma de tu navegador. Puedes cambiarlo cuando quieras.',
+      faqQ6: 'Olvidé mi contraseña — ¿qué hago?',
+      faqA6: 'Usa el enlace “¿Olvidaste tu contraseña?” al final de esta página. Te enviaremos un correo con un enlace para restablecerla.',
+      faqContact: '¿Aún tienes dudas o una idea?',
+      faqHelpBtn: '✉️ Obtener Ayuda',
+      faqSuggestBtn: '💡 Enviar Sugerencia',
+      faqReviewBtn: '⭐ Dejar una Reseña'
     }
   };
 
