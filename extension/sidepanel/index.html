@@ -372,6 +372,23 @@
         </div>
 
         <div class="settings-section">
+          <h3 data-i18n="teams">👥 Team</h3>
+          <p class="settings-hint" data-i18n="teamsHint">Share a script library with your whole team. Managers push updates — every agent gets them instantly.</p>
+          <div id="teamsSignedOut" class="team-block" style="display:none;">
+            <p class="text-muted" data-i18n="teamsSignInFirst">Sign in to create or join a team.</p>
+          </div>
+          <div id="teamsPanel" class="team-block" style="display:none;">
+            <div id="teamsList" class="teams-list"></div>
+            <button class="settings-btn" id="createTeamBtn">➕ <span data-i18n="createTeam">Create a team</span></button>
+            <div class="team-join-row">
+              <input type="text" id="joinCodeInput" class="team-input" placeholder="SP-XXXXX" maxlength="8" data-i18n-ph="joinCodePlaceholder">
+              <button class="settings-btn" id="joinTeamBtn" data-i18n="joinTeam">Join</button>
+            </div>
+            <div id="teamMsg" class="team-msg"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h3 data-i18n="keyboardShortcuts">Keyboard Shortcuts</h3>
           <div class="shortcut-list">
             <div class="shortcut-item"><span data-i18n="shortcutOpen">Open ScriptPad</span><kbd>Ctrl+Shift+S</kbd></div>
@@ -694,6 +711,7 @@
   <script src="i18n.js"></script>
   <script src="search.js"></script>
   <script src="storage.js"></script>
+  <script src="teams.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

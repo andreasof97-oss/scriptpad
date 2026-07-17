@@ -107,6 +107,10 @@ const Auth = (() => {
     return currentUser;
   }
 
+  function getClient() {
+    return client;
+  }
+
   function getPlan() {
     return currentPlan;
   }
@@ -129,6 +133,7 @@ const Auth = (() => {
     signOut,
     resetPassword,
     getUser,
+    getClient,
     getPlan,
     isPro,
     refreshPlan

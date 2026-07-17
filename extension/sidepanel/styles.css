@@ -2737,3 +2737,53 @@ body {
   opacity: 0.6;
   cursor: default;
 }
+
+/* ---- Teams ---- */
+.team-block { margin-top: 8px; }
+.teams-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.team-item {
+  background: var(--bg-secondary, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.team-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.team-name { font-weight: 600; }
+.team-role {
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.08); color: var(--text-muted, #9aa);
+}
+.team-role.manager { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+.team-code-row { margin: 6px 0; font-size: 13px; }
+.team-code {
+  font-family: monospace; font-weight: 700; letter-spacing: 1px;
+  background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px;
+  user-select: all;
+}
+.team-leave-btn {
+  margin-top: 6px; font-size: 12px; background: transparent;
+  border: 1px solid rgba(239,68,68,0.4); color: #f87171;
+  border-radius: 8px; padding: 4px 10px; cursor: pointer;
+}
+.team-leave-btn:hover { background: rgba(239,68,68,0.12); }
+.team-join-row { display: flex; gap: 8px; margin-top: 8px; }
+.team-input {
+  flex: 1; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--bg-primary, rgba(0,0,0,0.2)); color: var(--text, #fff);
+  text-transform: uppercase; letter-spacing: 1px; font-family: monospace;
+}
+.team-msg { font-size: 12px; margin-top: 6px; color: var(--text-muted, #9aa); }
+
+/* Shared script badge in the list */
+.shared-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(99,102,241,0.2); color: #a5b4fc; margin-left: 4px;
+  vertical-align: middle; white-space: nowrap;
+}
+.script-item.shared-script { border-left: 2px solid rgba(99,102,241,0.5); }
+.push-btn {
+  background: transparent; border: none; cursor: pointer; font-size: 15px;
+  opacity: 0.6; padding: 4px;
+}
+.push-btn:hover { opacity: 1; }

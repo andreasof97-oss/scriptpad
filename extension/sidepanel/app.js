@@ -32,6 +32,9 @@
     branchingEditorNodes: [],
     branchingEditorStartNodeId: null,
     selectedNodeId: null,
+    // Teams state
+    myTeams: [],          // teams the user belongs to (with role)
+    sharedScripts: [],    // shared team scripts (read-only), normalized
     // Account state
     user: null,       // { email, id } or null
     plan: 'free',     // 'free' or 'pro'
@@ -535,7 +538,14 @@
       uncategorized.forEach(s => content.appendChild(createScriptItem(s)));
     }
 
-    if (state.scripts.length === 0) {
+    // Team Library (shared, read-only, pushed by managers)
+    const shared = state.sharedScripts || [];
+    if (shared.length > 0) {
+      content.insertAdjacentHTML('beforeend', `<div class="section-label" style="margin-top:6px">👥 ${t('teamLibrary')}</div>`);
+      shared.forEach(s => content.appendChild(createScriptItem(s)));
+    }
+
+    if (state.scripts.length === 0 && shared.length === 0) {
       content.innerHTML = renderEmptyState('📝', t('noScripts'), t('noScriptsHint'));
     }
   }
@@ -599,23 +609,55 @@
     const query = state.searchQuery;
     const titleHtml = query ? highlightMatch(script.title, query) : esc(script.title);
 
+    // Shared team scripts: read-only badge
+    if (script.shared) {
+      div.classList.add('shared-script');
+      div.innerHTML = `
+        <span class="script-icon">${icon}</span>
+        <div class="script-info">
+          <div class="script-title">${titleHtml} <span class="shared-badge" title="${esc(script.teamName || '')}">👥 ${t('sharedTag')}</span></div>
+          <div class="script-meta">${esc(script.teamName || t('teamLibrary'))} · ${t('updatedAgo')} ${timeStr}</div>
+        </div>
+        <button class="copy-btn" title="${t('copy')}">📋</button>
+      `;
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-btn')) return;
+        openScript(script.id);
+      });
+      div.querySelector('.copy-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        copyScriptText(script);
+      });
+      return div;
+    }
+
+    const isManager = (state.myTeams || []).some(tm => tm.role === 'manager');
+
     div.innerHTML = `
       <span class="script-icon">${icon}</span>
       <div class="script-info">
         <div class="script-title">${titleHtml}${script.pinned ? ' <span class="pin-icon">📌</span>' : ''}</div>
         <div class="script-meta">${esc(folderName)} · ${t('updatedAgo')} ${timeStr}</div>
       </div>
+      ${isManager ? `<button class="push-btn" title="${t('pushToTeam')}">📤</button>` : ''}
       <button class="copy-btn" title="${t('copy')}">📋</button>
     `;
 
     div.addEventListener('click', (e) => {
-      if (e.target.closest('.copy-btn')) return;
+      if (e.target.closest('.copy-btn') || e.target.closest('.push-btn')) return;
       openScript(script.id);
     });
     div.querySelector('.copy-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       copyScriptText(script);
     });
+    const pushBtn = div.querySelector('.push-btn');
+    if (pushBtn) {
+      pushBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pushScriptToTeam(script.id);
+      });
+    }
 
     return div;
   }
@@ -1083,6 +1125,11 @@
     Auth.init(({ user, plan }) => {
       state.user = user;
       state.plan = plan;
+      if (typeof Teams !== 'undefined' && Auth.getClient) {
+        Teams.init(Auth.getClient());
+      }
+      // Refresh shared team scripts whenever auth changes
+      refreshSharedScripts();
       updateAccountUI();
       // Re-render current view to reflect plan changes
       if (state.currentView === 'main') {
@@ -1301,11 +1348,13 @@
 
   // ---- Render: Script Detail ----
   function openScript(scriptId) {
-    const script = state.scripts.find(s => s.id === scriptId);
+    let script = state.scripts.find(s => s.id === scriptId);
+    const isShared = !script && (state.sharedScripts || []).find(s => s.id === scriptId);
+    if (isShared) script = isShared;
     if (!script) return;
 
-    // Track view
-    StorageAPI.trackEvent(scriptId, 'view');
+    // Track view (only for the user's own scripts)
+    if (!script.shared) StorageAPI.trackEvent(scriptId, 'view');
 
     // Route branching scripts to branching viewer
     if (script.type === 'branching') {
@@ -1317,22 +1366,35 @@
     els.scriptViewTitle.textContent = script.title;
 
     // Tags
-    els.scriptViewTags.innerHTML = script.tags.map(tag =>
+    els.scriptViewTags.innerHTML = (script.tags || []).map(tag =>
       `<span class="tag">#${esc(tag)}</span>`
     ).join('');
 
     // Body
     els.scriptViewBody.innerHTML = script.body;
 
-    // Script stats badge
-    renderScriptStats(scriptId);
-
-    // Related Scripts
-    renderRelatedScripts(script);
-
-    // Pin button text
-    const pinSpan = els.pinScriptBtn.querySelector('span');
-    if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
+    // Shared scripts are read-only: hide edit/pin, show a shared note
+    const oldBadge = document.getElementById('scriptStatsBadge');
+    if (oldBadge) oldBadge.remove();
+    if (script.shared) {
+      if (els.editScriptBtn) els.editScriptBtn.style.display = 'none';
+      if (els.pinScriptBtn) els.pinScriptBtn.style.display = 'none';
+      const badge = document.createElement('div');
+      badge.id = 'scriptStatsBadge';
+      badge.className = 'script-stats-badge';
+      badge.innerHTML = `<span class="stat-item">👥 ${esc(script.teamName || t('teamLibrary'))} · ${t('sharedReadOnly')}</span>`;
+      els.scriptViewTags.after(badge);
+    } else {
+      if (els.editScriptBtn) els.editScriptBtn.style.display = '';
+      if (els.pinScriptBtn) els.pinScriptBtn.style.display = '';
+      // Script stats badge
+      renderScriptStats(scriptId);
+      // Related Scripts
+      renderRelatedScripts(script);
+      // Pin button text
+      const pinSpan = els.pinScriptBtn.querySelector('span');
+      if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
+    }
 
     showView('script');
   }
@@ -1456,9 +1518,131 @@
   function openSettings() {
     renderFolderManager();
     renderTemplatePacks();
+    renderTeams();
     updateThemeButtons();
     updateLangButtons();
     showView('settings');
+  }
+
+  // ---- Teams ----
+  async function refreshSharedScripts() {
+    try {
+      if (typeof Teams === 'undefined' || !Teams.ready()) {
+        state.sharedScripts = [];
+        state.myTeams = [];
+        return;
+      }
+      const teams = await Teams.getMyTeams();
+      state.myTeams = teams;
+      let all = [];
+      for (const team of teams) {
+        const s = await Teams.getSharedScripts(team.id);
+        s.forEach(x => { x.teamName = team.name; });
+        all = all.concat(s);
+      }
+      state.sharedScripts = all;
+      if (state.currentView === 'main') renderMain();
+    } catch (err) {
+      console.warn('[ScriptPad] refreshSharedScripts', err);
+    }
+  }
+
+  function renderTeams() {
+    const signedOut = document.getElementById('teamsSignedOut');
+    const panel = document.getElementById('teamsPanel');
+    const list = document.getElementById('teamsList');
+    if (!panel || !list) return;
+
+    if (!state.user) {
+      if (signedOut) signedOut.style.display = 'block';
+      panel.style.display = 'none';
+      return;
+    }
+    if (signedOut) signedOut.style.display = 'none';
+    panel.style.display = 'block';
+
+    const teams = state.myTeams || [];
+    if (!teams.length) {
+      list.innerHTML = `<p class="text-muted">${t('noTeamsYet')}</p>`;
+    } else {
+      list.innerHTML = '';
+      teams.forEach(team => {
+        const isManager = team.role === 'manager';
+        const div = document.createElement('div');
+        div.className = 'team-item';
+        div.innerHTML = `
+          <div class="team-item-head">
+            <span class="team-name">👥 ${esc(team.name)}</span>
+            <span class="team-role ${isManager ? 'manager' : ''}">${isManager ? t('roleManager') : t('roleAgent')}</span>
+          </div>
+          ${isManager ? `<div class="team-code-row"><span class="text-muted">${t('inviteCode')}:</span> <code class="team-code">${esc(team.invite_code)}</code></div>` : ''}
+          <button class="team-leave-btn danger-icon" title="${t('leaveTeam')}">${t('leaveTeam')}</button>
+        `;
+        div.querySelector('.team-leave-btn').addEventListener('click', () => leaveTeamConfirm(team));
+        list.appendChild(div);
+      });
+    }
+  }
+
+  async function createTeamFlow() {
+    if (!state.user) { showToast(t('teamsSignInFirst')); return; }
+    const name = prompt(t('createTeamPrompt'));
+    if (!name || !name.trim()) return;
+    try {
+      await Teams.createTeam(name.trim());
+      await refreshSharedScripts();
+      renderTeams();
+      showToast(t('teamCreated'));
+    } catch (err) {
+      showToast(t('teamError'));
+    }
+  }
+
+  async function joinTeamFlow() {
+    if (!state.user) { showToast(t('teamsSignInFirst')); return; }
+    const input = document.getElementById('joinCodeInput');
+    const code = input ? input.value.trim() : '';
+    if (!code) return;
+    try {
+      await Teams.joinTeam(code);
+      if (input) input.value = '';
+      await refreshSharedScripts();
+      renderTeams();
+      showToast(t('teamJoined'));
+    } catch (err) {
+      const msg = String(err && err.message);
+      showToast(msg === 'bad_code' ? t('teamBadCode') : t('teamError'));
+    }
+  }
+
+  function leaveTeamConfirm(team) {
+    showConfirm(t('leaveTeam'), t('leaveTeamConfirm'), async () => {
+      try {
+        await Teams.leaveTeam(team.id);
+        await refreshSharedScripts();
+        renderTeams();
+        renderMain();
+        showToast(t('teamLeft'));
+      } catch (err) {
+        showToast(t('teamError'));
+      }
+    });
+  }
+
+  async function pushScriptToTeam(scriptId) {
+    const script = await StorageAPI.getScript(scriptId);
+    if (!script) return;
+    const teams = (state.myTeams || []).filter(tm => tm.role === 'manager');
+    if (!teams.length) { showToast(t('needManagerTeam')); return; }
+    // If multiple managed teams, pick the first (simple foundation)
+    const team = teams[0];
+    try {
+      await Teams.pushScript(team.id, script);
+      await refreshSharedScripts();
+      showToast(t('scriptPushed'));
+    } catch (err) {
+      showToast(t('teamError'));
+    }
   }
 
   function renderFolderManager() {
@@ -2863,6 +3047,16 @@
     });
     els.exportBtn.addEventListener('click', exportScripts);
     els.newFolderBtn.addEventListener('click', createNewFolder);
+
+    // Teams
+    const createTeamBtn = document.getElementById('createTeamBtn');
+    const joinTeamBtn = document.getElementById('joinTeamBtn');
+    const joinCodeInput = document.getElementById('joinCodeInput');
+    if (createTeamBtn) createTeamBtn.addEventListener('click', createTeamFlow);
+    if (joinTeamBtn) joinTeamBtn.addEventListener('click', joinTeamFlow);
+    if (joinCodeInput) joinCodeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') joinTeamFlow();
+    });
 
     // Folder view
     els.folderBackBtn.addEventListener('click', () => { showView('main'); renderMain(); });
