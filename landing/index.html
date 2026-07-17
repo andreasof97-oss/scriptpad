@@ -1,4 +1,4 @@
-<!-- ScriptPad Landing Page -->
+<!-- aha-build-id: bmroczwiwbcykdixg -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -462,6 +462,10 @@
     /* ---- DEMO VIDEO PLACEHOLDER ---- */
     .demo-section { background: var(--bg-primary); }
     .demo-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
       max-width: 800px;
       margin: 0 auto;
       position: relative;
@@ -491,6 +495,13 @@
       transition: all 0.3s;
     }
     .demo-wrapper:hover .demo-play { transform: scale(1.1); }
+    .demo-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+      border-radius: 16px;
+    }
     .demo-coming {
       position: absolute;
       bottom: 20px;
@@ -701,9 +712,8 @@
       <h2 class="section-title" data-i18n="demoTitle">30 seconds to better calls</h2>
       <p class="section-sub" data-i18n="demoSub">Watch how ScriptPad works alongside your dialer — search, copy, and follow branching flows without leaving your call.</p>
     </div>
-    <div class="demo-wrapper reveal" id="demoWrapper">
-      <div class="demo-play">▶</div>
-      <span class="demo-coming" data-i18n="demoComing">Demo video coming soon — record a quick screen capture to add here!</span>
+    <div class="demo-wrapper has-video reveal" id="demoWrapper">
+      <iframe src="https://www.youtube.com/embed/iku2V1ndsTA" title="ScriptPad Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
   </div>
 </section>
@@ -782,6 +792,11 @@
         <span class="feature-icon">🔒</span>
         <h3 data-i18n="f12Title">100% Private</h3>
         <p data-i18n="f12Desc">Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📈</span>
+        <h3 data-i18n="f13Title">Script Analytics</h3>
+        <p data-i18n="f13Desc">See which scripts you use most, how often you copy them, and when you last used each one. Know your playbook inside out.</p>
       </div>
     </div>
   </div>
@@ -913,6 +928,7 @@
       f10Title: 'Pin Favorites', f10Desc: 'Pin your most-used scripts to the top for instant access. Your go-to scripts, one click away.',
       f11Title: 'Rich Text Editor', f11Desc: 'Bold, italic, bullets, highlights. Format scripts exactly how you need them for quick scanning.',
       f12Title: '100% Private', f12Desc: 'Everything stored locally on your device. No accounts, no servers, no tracking. Your scripts are yours.',
+      f13Title: 'Script Analytics', f13Desc: 'See which scripts you use most, how often you copy them, and when you last used each one. Know your playbook inside out.',
       howLabel: 'How It Works',
       howTitle: 'Ready in under a minute',
       howSub: 'No sign-ups. No configuration. Just install and go.',
@@ -974,6 +990,7 @@
       f10Title: 'Fijar Favoritos', f10Desc: 'Fija tus guiones más usados arriba para acceso instantáneo. Tus guiones favoritos, a un clic.',
       f11Title: 'Editor de Texto Rico', f11Desc: 'Negrita, cursiva, viñetas, resaltado. Formatea guiones exactamente como los necesitas para escaneo rápido.',
       f12Title: '100% Privado', f12Desc: 'Todo almacenado localmente en tu dispositivo. Sin cuentas, sin servidores, sin rastreo. Tus guiones son tuyos.',
+      f13Title: 'Análisis de Guiones', f13Desc: 'Ve qué guiones usas más, cuántas veces los copias y cuándo los usaste por última vez. Conoce tu playbook a fondo.',
       howLabel: 'Cómo Funciona',
       howTitle: 'Listo en menos de un minuto',
       howSub: 'Sin registros. Sin configuración. Solo instala y listo.',
