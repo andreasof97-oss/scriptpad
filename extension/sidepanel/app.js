@@ -2002,6 +2002,74 @@
     return div.textContent || div.innerText || '';
   }
 
+  // Generate smart AI suggestions based on user's actual content
+  function generateAISuggestions() {
+    const suggestions = [];
+    const scripts = state.scripts || [];
+    const folders = state.folders || [];
+    const kb = state.knowledgeBase || [];
+    const notes = state.notes || [];
+
+    // Suggestion based on folders ("What's my best [folder name]?")
+    const folderNames = folders.map(f => f.name).filter(Boolean);
+    if (folderNames.length > 0) {
+      const topFolder = folderNames[0];
+      suggestions.push({
+        icon: '📂',
+        label: t('aiSuggestBestIn').replace('{folder}', topFolder),
+        prompt: t('aiSuggestBestInPrompt').replace('{folder}', topFolder)
+      });
+    }
+
+    // Suggestion based on pinned scripts ("Summarize my pinned scripts")
+    const pinned = scripts.filter(s => s.pinned);
+    if (pinned.length > 0) {
+      suggestions.push({
+        icon: '📌',
+        label: t('aiSuggestPinned'),
+        prompt: t('aiSuggestPinnedPrompt')
+      });
+    }
+
+    // Suggestion based on KB categories
+    const categories = [...new Set(kb.map(e => e.category).filter(Boolean))];
+    if (categories.length > 0) {
+      const topCat = categories[0];
+      suggestions.push({
+        icon: '📖',
+        label: t('aiSuggestKB').replace('{category}', topCat),
+        prompt: t('aiSuggestKBPrompt').replace('{category}', topCat)
+      });
+    }
+
+    // Generic suggestion if they have scripts
+    if (scripts.length > 0) {
+      suggestions.push({
+        icon: '💡',
+        label: t('aiSuggestImprove'),
+        prompt: t('aiSuggestImprovePrompt')
+      });
+    }
+
+    // Generic suggestion if they have notes
+    if (notes.length > 0 && suggestions.length < 4) {
+      suggestions.push({
+        icon: '📝',
+        label: t('aiSuggestNotes'),
+        prompt: t('aiSuggestNotesPrompt')
+      });
+    }
+
+    // Fallback generic suggestions if nothing else
+    if (suggestions.length === 0) {
+      suggestions.push(
+        { icon: '🚀', label: t('aiSuggestGetStarted'), prompt: t('aiSuggestGetStartedPrompt') }
+      );
+    }
+
+    return suggestions.slice(0, 4); // Max 4 chips
+  }
+
   // Build full context string for AI prompt (KB + scripts + notes)
   function buildKBContext() {
     let context = '';
@@ -2155,11 +2223,25 @@
     container.innerHTML = '';
 
     if (state.aiMessages.length === 0) {
+      const suggestions = generateAISuggestions();
+      const chipsHtml = suggestions.length > 0
+        ? `<div class="ai-suggestions">${suggestions.map(s =>
+            `<button class="ai-suggestion-chip" data-prompt="${esc(s.prompt)}">${s.icon} ${esc(s.label)}</button>`
+          ).join('')}</div>`
+        : '';
       container.innerHTML = `<div class="ai-welcome">
         <div class="ai-welcome-icon">\ud83e\udd16</div>
         <div class="ai-welcome-title">${t('aiAssistant')}</div>
-        <div class="ai-welcome-hint">${t('aiPlaceholder')}</div>
+        <div class="ai-welcome-hint">${t('aiSmartHint')}</div>
+        ${chipsHtml}
       </div>`;
+      // Bind chip clicks
+      container.querySelectorAll('.ai-suggestion-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          els.aiInput.value = btn.dataset.prompt;
+          sendAIMessage();
+        });
+      });
       return;
     }
 

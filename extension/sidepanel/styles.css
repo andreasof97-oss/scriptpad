@@ -2585,3 +2585,33 @@ body {
   background: var(--bg-hover, rgba(59, 130, 246, 0.1));
   color: var(--accent);
 }
+
+/* AI Smart Suggestions */
+.ai-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+  padding: 0 8px;
+}
+.ai-suggestion-chip {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ai-suggestion-chip:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.ai-suggestion-chip:active {
+  transform: translateY(0);
+}
