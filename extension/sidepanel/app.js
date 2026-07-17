@@ -493,9 +493,19 @@
       content.innerHTML = `<div class="section-label">🔍 ${t('searchResults')} (${displayScripts.length})</div>`;
       if (displayScripts.length === 0) {
         content.innerHTML += renderEmptyState('🔍', t('noResults'), t('noResultsHint'));
-        return;
+      } else {
+        displayScripts.forEach(s => content.appendChild(createScriptItem(s)));
       }
-      displayScripts.forEach(s => content.appendChild(createScriptItem(s)));
+      // "Ask AI" suggestion after search results
+      const askAIDiv = document.createElement('div');
+      askAIDiv.className = 'ask-ai-suggestion';
+      askAIDiv.innerHTML = `<button class="ask-ai-search-btn">🤖 ${t('aiAskAbout')} "${esc(state.searchQuery)}"</button>`;
+      askAIDiv.querySelector('button').addEventListener('click', () => {
+        toggleAIPanel(true);
+        els.aiInput.value = state.searchQuery;
+        sendAIMessage();
+      });
+      content.appendChild(askAIDiv);
       return;
     }
 
@@ -527,6 +537,15 @@
     }
   }
 
+  // Highlight matching text in search results
+  function highlightMatch(text, query) {
+    if (!query || !text) return esc(text);
+    const escaped = esc(text);
+    const pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${pattern})`, 'gi');
+    return escaped.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
+
   function createScriptItem(script) {
     const div = document.createElement('div');
     div.className = 'script-item';
@@ -537,11 +556,13 @@
     const timeStr = timeAgo(script.updatedAt);
     const isBranching = script.type === 'branching';
     const icon = isBranching ? '🔀' : '📄';
+    const query = state.searchQuery;
+    const titleHtml = query ? highlightMatch(script.title, query) : esc(script.title);
 
     div.innerHTML = `
       <span class="script-icon">${icon}</span>
       <div class="script-info">
-        <div class="script-title">${esc(script.title)}${script.pinned ? ' <span class="pin-icon">📌</span>' : ''}</div>
+        <div class="script-title">${titleHtml}${script.pinned ? ' <span class="pin-icon">📌</span>' : ''}</div>
         <div class="script-meta">${esc(folderName)} · ${t('updatedAgo')} ${timeStr}</div>
       </div>
       <button class="copy-btn" title="${t('copy')}">📋</button>
@@ -646,11 +667,14 @@
     const title = note.title || t('noteTitle');
     const preview = lines.length > 1 ? lines[1].trim() : '';
     const timeStr = timeAgo(note.updatedAt);
+    const query = state.searchQuery;
+    const titleHtml = query ? highlightMatch(title, query) : esc(title);
+    const previewHtml = query && preview ? highlightMatch(preview, query) : esc(preview);
 
     div.innerHTML = `
       <div class="note-info">
-        <div class="note-title">${esc(title)}</div>
-        ${preview ? `<div class="note-preview">${esc(preview)}</div>` : ''}
+        <div class="note-title">${titleHtml}</div>
+        ${preview ? `<div class="note-preview">${previewHtml}</div>` : ''}
         <div class="note-meta">${t('updatedAgo')} ${timeStr}</div>
       </div>
       <button class="note-copy-btn" title="${t('copy')}">📋</button>
@@ -1257,11 +1281,52 @@
     // Body
     els.scriptViewBody.innerHTML = script.body;
 
+    // Related Scripts
+    renderRelatedScripts(script);
+
     // Pin button text
     const pinSpan = els.pinScriptBtn.querySelector('span');
     if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
 
     showView('script');
+  }
+
+  // ---- Related Scripts ----
+  function renderRelatedScripts(script) {
+    // Remove old related section if present
+    const existing = document.getElementById('relatedScripts');
+    if (existing) existing.remove();
+
+    // Find related scripts by shared tags or same folder
+    const related = state.scripts.filter(s => {
+      if (s.id === script.id) return false;
+      // Same folder?
+      if (s.folderId && s.folderId === script.folderId) return true;
+      // Overlapping tags?
+      if (script.tags && s.tags) {
+        const overlap = s.tags.filter(tag => script.tags.includes(tag));
+        if (overlap.length > 0) return true;
+      }
+      return false;
+    }).slice(0, 3); // Max 3 suggestions
+
+    if (related.length === 0) return;
+
+    const container = document.createElement('div');
+    container.id = 'relatedScripts';
+    container.className = 'related-scripts';
+    container.innerHTML = `<div class="related-label">${t('relatedScripts')}</div>`;
+
+    related.forEach(s => {
+      const icon = s.type === 'branching' ? '\u{1F500}' : '\u{1F4C4}';
+      const item = document.createElement('div');
+      item.className = 'related-item';
+      item.innerHTML = `<span class="script-icon">${icon}</span> ${esc(s.title)}`;
+      item.addEventListener('click', () => openScript(s.id));
+      container.appendChild(item);
+    });
+
+    els.scriptViewBody.after(container);
   }
 
   // ---- Editor ----
@@ -1937,29 +2002,63 @@
     return div.textContent || div.innerText || '';
   }
 
-  // Build KB context string for AI prompt
+  // Build full context string for AI prompt (KB + scripts + notes)
   function buildKBContext() {
+    let context = '';
+
+    // Knowledge Base entries
     const entries = state.knowledgeBase || [];
-    if (entries.length === 0) return '';
-
-    // Group by category
-    const groups = {};
-    entries.forEach(entry => {
-      const cat = (entry.category || 'custom').toUpperCase();
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(entry);
-    });
-
-    let context = '=== KNOWLEDGE BASE ===\n';
-    for (const [category, items] of Object.entries(groups)) {
-      context += `\n[${category}]\n\n`;
-      items.forEach(item => {
-        context += `**${item.title}**\n`;
-        context += stripHtml(item.body) + '\n\n';
+    if (entries.length > 0) {
+      const groups = {};
+      entries.forEach(entry => {
+        const cat = (entry.category || 'custom').toUpperCase();
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(entry);
       });
+      context += '=== KNOWLEDGE BASE ===\n';
+      for (const [category, items] of Object.entries(groups)) {
+        context += `\n[${category}]\n\n`;
+        items.forEach(item => {
+          context += `**${item.title}**\n`;
+          context += stripHtml(item.body) + '\n\n';
+        });
+      }
+      context += '=== END KNOWLEDGE BASE ===\n\n';
     }
-    context += '=== END KNOWLEDGE BASE ===';
-    return context;
+
+    // Scripts (include titles, tags, and body text so AI can reference them)
+    const scripts = state.scripts || [];
+    if (scripts.length > 0) {
+      context += '=== SCRIPTS ===\n';
+      scripts.forEach(s => {
+        const folder = state.folders.find(f => f.id === s.folderId);
+        const folderName = folder ? folder.name : 'Uncategorized';
+        context += `\n[${folderName}] **${s.title}**`;
+        if (s.tags && s.tags.length) context += ` (tags: ${s.tags.join(', ')})`;
+        context += '\n';
+        if (s.type === 'branching' && Array.isArray(s.nodes)) {
+          s.nodes.forEach(node => {
+            context += `  - ${node.label}: ${stripHtml(node.body).substring(0, 200)}\n`;
+          });
+        } else {
+          context += stripHtml(s.body).substring(0, 300) + '\n';
+        }
+      });
+      context += '=== END SCRIPTS ===\n\n';
+    }
+
+    // Notes (include so AI can reference them too)
+    const notes = state.notes || [];
+    if (notes.length > 0) {
+      context += '=== NOTES ===\n';
+      notes.forEach(n => {
+        context += `\n**${n.title || 'Note'}**\n`;
+        context += (n.body || '').substring(0, 200) + '\n';
+      });
+      context += '=== END NOTES ===';
+    }
+
+    return context || '';
   }
 
   // Markdown-lite parser for AI responses
@@ -2100,9 +2199,11 @@
       return;
     }
 
-    // Check if KB is empty
+    // Check if there's any content at all
     const kbEntries = state.knowledgeBase || [];
-    if (kbEntries.length === 0) {
+    const hasScripts = (state.scripts || []).length > 0;
+    const hasNotes = (state.notes || []).length > 0;
+    if (kbEntries.length === 0 && !hasScripts && !hasNotes) {
       state.aiMessages.push({ role: 'error', content: t('aiErrorEmptyKB') });
       renderAIMessages();
       return;

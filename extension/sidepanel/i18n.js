@@ -260,12 +260,14 @@ const translations = {
     aiTyping: 'Thinking...',
     aiErrorNetwork: 'Connection error. Check your internet and try again.',
     aiErrorAPI: 'Something went wrong. Please try again.',
-    aiErrorEmptyKB: 'Your Knowledge Base is empty. Add some entries first to get AI recommendations.',
+    aiErrorEmptyKB: 'No content found. Add scripts, notes, or knowledge base entries first so AI can help you.',
     aiErrorTimeout: 'Request timed out. Try a shorter question.',
     aiQueriesRemaining: 'questions remaining today',
     aiLimitReached: 'Daily AI limit reached',
     aiLimitHint: 'Upgrade to Pro for unlimited AI questions',
     aiUpgradePrompt: 'Upgrade to Pro ⚡',
+    aiAskAbout: 'Ask AI about',
+    relatedScripts: '💡 Related Scripts',
 
     // Misc
     updatedAgo: 'Updated',
@@ -535,12 +537,14 @@ const translations = {
     aiTyping: 'Pensando...',
     aiErrorNetwork: 'Error de conexión. Revisa tu internet e intenta de nuevo.',
     aiErrorAPI: 'Algo salió mal. Intenta de nuevo.',
-    aiErrorEmptyKB: 'Tu Base de Conocimiento está vacía. Agrega entradas primero para obtener recomendaciones.',
+    aiErrorEmptyKB: 'No se encontró contenido. Agrega guiones, notas o entradas de conocimiento para que la IA te ayude.',
     aiErrorTimeout: 'Tiempo de espera agotado. Intenta con una pregunta más corta.',
     aiQueriesRemaining: 'preguntas restantes hoy',
     aiLimitReached: 'Límite diario de IA alcanzado',
     aiLimitHint: 'Actualiza a Pro para preguntas de IA ilimitadas',
     aiUpgradePrompt: 'Actualiza a Pro ⚡',
+    aiAskAbout: 'Pregunta a la IA sobre',
+    relatedScripts: '💡 Guiones Relacionados',
 
     // Misc
     updatedAgo: 'Actualizado',
