@@ -197,6 +197,7 @@
     accountPlan: $('#accountPlan'),
     signInBtn: $('#signInBtn'),
     signOutBtn: $('#signOutBtn'),
+    changePwBtn: $('#changePwBtn'),
     upgradeCtaSettings: $('#upgradeCtaSettings'),
     upgradeFromSettings: $('#upgradeFromSettings'),
     // Sign In view
@@ -1241,6 +1242,23 @@
       showToast(t('signOut') + ' ✓');
     } catch (err) {
       console.error('[ScriptPad] Sign out error:', err);
+    }
+  }
+
+  async function handleChangePassword() {
+    if (!state.user) { showToast(t('teamsSignInFirst')); return; }
+    const p1 = prompt(t('newPasswordPrompt'));
+    if (p1 === null) return;
+    if (!p1 || p1.trim().length < 6) { showToast(t('passwordTooShort')); return; }
+    const p2 = prompt(t('confirmPasswordPrompt'));
+    if (p2 === null) return;
+    if (p1 !== p2) { showToast(t('passwordsDontMatch')); return; }
+    try {
+      await Auth.changePassword(p1.trim());
+      showToast(t('passwordChanged'));
+    } catch (err) {
+      console.error('[ScriptPad] Change password error:', err);
+      showToast(t('passwordChangeError'));
     }
   }
 
@@ -3043,6 +3061,7 @@
     // Account & Auth
     els.signInBtn.addEventListener('click', openSignIn);
     els.signOutBtn.addEventListener('click', handleSignOut);
+    if (els.changePwBtn) els.changePwBtn.addEventListener('click', handleChangePassword);
     els.upgradeFromSettings.addEventListener('click', openUpgrade);
     els.signInBackBtn.addEventListener('click', () => showView('settings'));
     els.authSubmitBtn.addEventListener('click', handleAuth);

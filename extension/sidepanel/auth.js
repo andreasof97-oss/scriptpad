@@ -103,6 +103,12 @@ const Auth = (() => {
     return data;
   }
 
+  async function changePassword(newPassword) {
+    const { data, error } = await client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return data;
+  }
+
   function getUser() {
     return currentUser;
   }
@@ -132,6 +138,7 @@ const Auth = (() => {
     signUp,
     signOut,
     resetPassword,
+    changePassword,
     getUser,
     getClient,
     getPlan,
