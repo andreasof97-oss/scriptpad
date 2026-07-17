@@ -1,4 +1,4 @@
-<!-- aha-build-id: bmrp2hyj8zo2f2a5q -->
+<!-- aha-build-id: bmrpeds8lhvapm9jk -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -880,6 +880,78 @@
     <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank">Chrome Web Store</a>
   </div>
 </footer>
+
+<!-- PASSWORD RECOVERY OVERLAY (shown only when arriving from a reset email) -->
+<div id="pwRecoveryOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,0.92);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#151a24;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="font-size:30px;text-align:center;margin-bottom:6px;">⚡</div>
+    <h2 style="color:#fff;text-align:center;margin:0 0 6px;font-size:20px;">Set a new password</h2>
+    <p style="color:#9aa4b2;text-align:center;margin:0 0 20px;font-size:14px;">Enter a new password for your ScriptPad account.</p>
+    <input id="pwNew" type="password" placeholder="New password" autocomplete="new-password"
+      style="width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1017;color:#fff;font-size:15px;">
+    <input id="pwConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password"
+      style="width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1017;color:#fff;font-size:15px;">
+    <button id="pwSubmit"
+      style="width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Update password</button>
+    <div id="pwMsg" style="text-align:center;margin-top:14px;font-size:14px;min-height:20px;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ---- Password recovery flow (from Supabase reset email) ----
+  (function () {
+    var SUPABASE_URL = 'https://okwbfzzbysfkpiuobjkx.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rd2JmenpieXNma3BpdW9iamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzUyNTQsImV4cCI6MjA5NjYxMTI1NH0.VY6w2ul8SCcTYfTeq07y_yXiw5lEkKITZykY_wo1oYk';
+    var hash = window.location.hash || '';
+    var isRecovery = hash.indexOf('type=recovery') !== -1 || hash.indexOf('access_token=') !== -1;
+    if (!isRecovery) return;
+    if (!window.supabase || !window.supabase.createClient) return;
+
+    var overlay = document.getElementById('pwRecoveryOverlay');
+    var msg = document.getElementById('pwMsg');
+    var submit = document.getElementById('pwSubmit');
+    var newIn = document.getElementById('pwNew');
+    var confirmIn = document.getElementById('pwConfirm');
+    overlay.style.display = 'flex';
+
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
+    });
+
+    function setMsg(text, ok) {
+      msg.textContent = text;
+      msg.style.color = ok ? '#4ade80' : '#f87171';
+    }
+
+    submit.addEventListener('click', function () {
+      var p1 = newIn.value.trim();
+      var p2 = confirmIn.value.trim();
+      if (p1.length < 6) { setMsg('Password must be at least 6 characters.', false); return; }
+      if (p1 !== p2) { setMsg('Passwords don\'t match.', false); return; }
+      submit.disabled = true;
+      setMsg('Updating…', true);
+      client.auth.updateUser({ password: p1 }).then(function (res) {
+        submit.disabled = false;
+        if (res.error) { setMsg(res.error.message || 'Something went wrong. Try the reset link again.', false); return; }
+        setMsg('✅ Password updated! You can now sign in from the ScriptPad extension.', true);
+        newIn.style.display = 'none';
+        confirmIn.style.display = 'none';
+        submit.style.display = 'none';
+        // Clean the token out of the URL
+        history.replaceState(null, '', window.location.pathname);
+      }).catch(function () {
+        submit.disabled = false;
+        setMsg('Something went wrong. Try the reset link again.', false);
+      });
+    });
+
+    // Allow Enter to submit
+    [newIn, confirmIn].forEach(function (el) {
+      el.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit.click(); });
+    });
+  })();
+</script>
 
 <script>
   // ---- i18n translations ----
