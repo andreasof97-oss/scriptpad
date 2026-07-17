@@ -612,6 +612,57 @@ const StorageAPI = (() => {
     console.log('[ScriptPad] Added KB seed data (4 entries)');
   }
 
+  // ---- Script Analytics ----
+
+  async function getAnalytics() {
+    return new Promise((resolve) => {
+      storage.get(['scriptAnalytics'], (data) => {
+        resolve(data.scriptAnalytics || {});
+      });
+    });
+  }
+
+  async function trackEvent(scriptId, eventType) {
+    // eventType: 'view' | 'copy' | 'aiMention'
+    const analytics = await getAnalytics();
+    if (!analytics[scriptId]) {
+      analytics[scriptId] = { views: 0, copies: 0, aiMentions: 0, lastUsed: null, history: [] };
+    }
+    const entry = analytics[scriptId];
+    const now = new Date().toISOString();
+    if (eventType === 'view') entry.views++;
+    else if (eventType === 'copy') entry.copies++;
+    else if (eventType === 'aiMention') entry.aiMentions++;
+    entry.lastUsed = now;
+    // Keep last 30 days of daily usage
+    const today = getTodayDateStr();
+    const lastEntry = entry.history[entry.history.length - 1];
+    if (lastEntry && lastEntry.date === today) {
+      lastEntry.events++;
+    } else {
+      entry.history.push({ date: today, events: 1 });
+      // Keep only last 30 entries
+      if (entry.history.length > 30) entry.history.shift();
+    }
+    analytics[scriptId] = entry;
+    return new Promise((resolve) => {
+      storage.set({ scriptAnalytics: analytics }, () => resolve(entry));
+    });
+  }
+
+  async function getTopScripts(limit = 10) {
+    const analytics = await getAnalytics();
+    return Object.entries(analytics)
+      .map(([id, data]) => ({ id, ...data, total: data.views + data.copies * 2 }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limit);
+  }
+
+  async function getScriptStats(scriptId) {
+    const analytics = await getAnalytics();
+    return analytics[scriptId] || { views: 0, copies: 0, aiMentions: 0, lastUsed: null, history: [] };
+  }
+
   // ---- AI Usage Tracking ----
 
   function getTodayDateStr() {
@@ -688,6 +739,10 @@ const StorageAPI = (() => {
     seedIfEmpty,
     getAIUsage,
     incrementAIUsage,
-    canUseAI
+    canUseAI,
+    getAnalytics,
+    trackEvent,
+    getTopScripts,
+    getScriptStats
   };
 })();

@@ -509,6 +509,9 @@
       return;
     }
 
+    // Most Used (analytics-powered)
+    renderMostUsedSection(content);
+
     // Pinned
     const pinned = state.scripts.filter(s => s.pinned);
     if (pinned.length > 0) {
@@ -535,6 +538,43 @@
     if (state.scripts.length === 0) {
       content.innerHTML = renderEmptyState('📝', t('noScripts'), t('noScriptsHint'));
     }
+  }
+
+  // ---- Analytics: Most Used Section ----
+  async function renderMostUsedSection(container) {
+    const topScripts = await StorageAPI.getTopScripts(3);
+    if (topScripts.length === 0) return;
+
+    // Only show if there's meaningful data (at least 2 total events)
+    const hasData = topScripts.some(s => s.total >= 2);
+    if (!hasData) return;
+
+    const section = document.createElement('div');
+    section.className = 'most-used-section';
+    section.innerHTML = `<div class="section-label">📈 ${t('mostUsed')}</div>`;
+
+    topScripts.forEach((entry, i) => {
+      const script = state.scripts.find(s => s.id === entry.id);
+      if (!script) return;
+
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+      const div = document.createElement('div');
+      div.className = 'most-used-item';
+      div.innerHTML = `
+        <span class="most-used-rank">${medal}</span>
+        <div class="most-used-info">
+          <div class="most-used-title">${esc(script.title)}</div>
+          <div class="most-used-stats">
+            <span>👁 ${entry.views}</span>
+            <span>📋 ${entry.copies}</span>
+          </div>
+        </div>
+      `;
+      div.addEventListener('click', () => openScript(script.id));
+      section.appendChild(div);
+    });
+
+    container.appendChild(section);
   }
 
   // Highlight matching text in search results
@@ -1264,6 +1304,9 @@
     const script = state.scripts.find(s => s.id === scriptId);
     if (!script) return;
 
+    // Track view
+    StorageAPI.trackEvent(scriptId, 'view');
+
     // Route branching scripts to branching viewer
     if (script.type === 'branching') {
       openBranchingScript(scriptId);
@@ -1281,6 +1324,9 @@
     // Body
     els.scriptViewBody.innerHTML = script.body;
 
+    // Script stats badge
+    renderScriptStats(scriptId);
+
     // Related Scripts
     renderRelatedScripts(script);
 
@@ -1289,6 +1335,25 @@
     if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
 
     showView('script');
+  }
+
+  // ---- Script Stats Badge ----
+  async function renderScriptStats(scriptId) {
+    const existing = document.getElementById('scriptStatsBadge');
+    if (existing) existing.remove();
+
+    const stats = await StorageAPI.getScriptStats(scriptId);
+    if (stats.views === 0 && stats.copies === 0) return;
+
+    const badge = document.createElement('div');
+    badge.id = 'scriptStatsBadge';
+    badge.className = 'script-stats-badge';
+    badge.innerHTML = `
+      <span class="stat-item">👁 ${stats.views} ${t('views')}</span>
+      <span class="stat-item">📋 ${stats.copies} ${t('copies')}</span>
+      ${stats.lastUsed ? `<span class="stat-item">🕒 ${t('lastUsed')} ${timeAgo(stats.lastUsed)}</span>` : ''}
+    `;
+    els.scriptViewTags.after(badge);
   }
 
   // ---- Related Scripts ----
@@ -1510,6 +1575,8 @@
 
   // ---- Copy ----
   function copyScriptText(script) {
+    // Track copy
+    StorageAPI.trackEvent(script.id, 'copy');
     let text;
     if (script.type === 'branching' && Array.isArray(script.nodes)) {
       // Concatenate all node text for branching scripts
