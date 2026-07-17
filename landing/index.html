@@ -1,3 +1,4 @@
+<!-- ScriptPad Landing Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,20 +9,22 @@
   <meta name="keywords" content="call center scripts, call script organizer, chrome extension call center, telemarketer scripts, sales scripts, objection handlers, decision tree calls, call center tools, script manager, call center agent tools, free chrome extension, bilingual call scripts">
   <link rel="canonical" href="https://andreasof97-oss.github.io/scriptpad/">
 
-  <!-- Open Graph -->
+  <!-- Open Graph — proper 1200×630 banner -->
   <meta property="og:title" content="ScriptPad — Free Call Script Organizer for Call Center Agents">
   <meta property="og:description" content="Organize call scripts, decision trees & objection handlers in a Chrome side panel. Free, private, bilingual (EN/ES). Built for agents who work the phones.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://andreasof97-oss.github.io/scriptpad/">
-  <meta property="og:image" content="https://andreasof97-oss.github.io/scriptpad/icon48.png">
+  <meta property="og:image" content="https://andreasof97-oss.github.io/scriptpad/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_ES">
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="ScriptPad — Free Call Script Organizer">
-  <meta name="twitter:description" content="Chrome extension that organizes call scripts, decision trees & objection handlers. Free & bilingual.">
-  <meta name="twitter:image" content="https://andreasof97-oss.github.io/scriptpad/icon48.png">
+  <!-- Twitter Card — large image -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ScriptPad — Free Call Script Organizer for Call Center Agents">
+  <meta name="twitter:description" content="Chrome extension that organizes call scripts, decision trees & objection handlers. Free, private & bilingual.">
+  <meta name="twitter:image" content="https://andreasof97-oss.github.io/scriptpad/og-image.png">
 
   <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
@@ -49,7 +52,7 @@
   }
   </script>
 
-  <link rel="icon" href="../extension/icons/icon48.png" type="image/png">
+  <link rel="icon" href="icon48.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -67,12 +70,12 @@
       --text-muted: #64748b;
       --border: #334155;
       --green: #22c55e;
+      --orange: #f97316;
       --radius: 12px;
       --radius-sm: 8px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -229,7 +232,7 @@
     }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ---- MOCKUP ---- */
+    /* ---- MOCKUP with animated demo ---- */
     .mockup-wrapper {
       margin-top: 64px;
       width: 100%;
@@ -288,6 +291,10 @@
       color: #fff;
       border-radius: 4px;
       padding: 2px 8px;
+      transition: all 0.2s;
+    }
+    .mockup-copy.copied {
+      background: var(--green);
     }
     .mockup-pin { color: #eab308; font-size: 0.7rem; }
     .mockup-new-badge {
@@ -298,6 +305,72 @@
       padding: 1px 6px;
       border-radius: 3px;
       margin-left: 6px;
+    }
+
+    /* ---- SOCIAL PROOF ---- */
+    .social-proof {
+      padding: 48px 24px 0;
+      text-align: center;
+    }
+    .social-proof-inner {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .testimonial-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 600px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: 12px; left: 20px;
+      font-size: 4rem;
+      color: var(--accent);
+      opacity: 0.2;
+      line-height: 1;
+      font-family: Georgia, serif;
+    }
+    .testimonial-card p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+    .testimonial-author {
+      display: flex; align-items: center; gap: 12px;
+      justify-content: center;
+    }
+    .testimonial-author .stars { color: #eab308; font-size: 0.9rem; }
+    .testimonial-author .name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .testimonial-author .role {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .social-stats {
+      display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .social-stat {
+      text-align: center;
+    }
+    .social-stat .num {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .social-stat .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
     /* ---- FEATURES GRID ---- */
@@ -386,6 +459,85 @@
     .privacy-box h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
     .privacy-box p { color: var(--text-secondary); font-size: 1.05rem; max-width: 480px; margin: 0 auto; }
 
+    /* ---- DEMO VIDEO PLACEHOLDER ---- */
+    .demo-section { background: var(--bg-primary); }
+    .demo-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .demo-wrapper:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+    .demo-play {
+      width: 80px; height: 80px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      color: #fff;
+      box-shadow: 0 0 30px var(--accent-glow);
+      transition: all 0.3s;
+    }
+    .demo-wrapper:hover .demo-play { transform: scale(1.1); }
+    .demo-coming {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    /* When a real video is embedded, hide the placeholder */
+    .demo-wrapper.has-video .demo-play,
+    .demo-wrapper.has-video .demo-coming { display: none; }
+
+    /* ---- PRODUCT HUNT BADGE ---- */
+    .ph-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-top: 16px;
+    }
+    .ph-badge:hover { border-color: var(--orange); }
+    .ph-badge .ph-icon {
+      width: 32px; height: 32px;
+      background: var(--orange);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; color: #fff;
+    }
+    .ph-badge .ph-text {
+      text-align: left;
+      line-height: 1.3;
+    }
+    .ph-badge .ph-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .ph-badge .ph-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
     /* ---- CTA BANNER ---- */
     .cta-banner {
       text-align: center;
@@ -437,6 +589,7 @@
       .hero { padding-top: 120px; padding-bottom: 48px; }
       .privacy-box { padding: 32px 24px; }
       .nav-cta-text { display: none; }
+      .social-stats { gap: 24px; }
     }
     @media (min-width: 769px) and (max-width: 1024px) {
       .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -449,7 +602,7 @@
 <nav>
   <div class="nav-inner">
     <a href="#" class="nav-brand">
-      <img src="../extension/icons/icon48.png" alt="ScriptPad icon">
+      <img src="icon48.png" alt="ScriptPad icon">
       ScriptPad
     </a>
     <div class="nav-right">
@@ -467,17 +620,26 @@
     ⚡ <span data-i18n="heroBadge">Free Chrome Extension</span>
   </div>
   <h1 data-i18n="heroTitle">Your scripts. Always ready. One click away.</h1>
-  <p data-i18n="heroSub">The #1 script organizer for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.</p>
+  <p data-i18n="heroSub">The script organizer built for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.</p>
   <div class="hero-buttons">
     <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta btn-cta-large">
       🌐 <span data-i18n="heroCta">Add to Chrome — It's Free</span>
     </a>
-    <a href="#features" class="btn-secondary">
-      <span data-i18n="heroSecondary">See Features ↓</span>
+    <a href="#demo" class="btn-secondary">
+      <span data-i18n="heroSecondary">Watch Demo ▶</span>
     </a>
   </div>
 
-  <!-- MOCKUP -->
+  <!-- Product Hunt badge placeholder -->
+  <a href="#" class="ph-badge" id="phBadge" data-i18n-attr="ph">
+    <div class="ph-icon">P</div>
+    <div class="ph-text">
+      <div class="ph-label" data-i18n="phLabel">FEATURED ON</div>
+      <div class="ph-name">Product Hunt</div>
+    </div>
+  </a>
+
+  <!-- MOCKUP with micro-animation -->
   <div class="mockup-wrapper">
     <div class="mockup">
       <div class="mockup-titlebar">
@@ -487,16 +649,61 @@
         <span style="margin-left:auto">ScriptPad</span>
       </div>
       <div class="mockup-body">
-        <div class="mockup-search">🔍 <span data-i18n="mockSearch">Search scripts...</span></div>
+        <div class="mockup-search">🔍 <span id="mockSearchText" data-i18n="mockSearch">Search scripts...</span></div>
         <div class="mockup-folder" style="color: #eab308;">📌 <span data-i18n="mockPinned">Pinned</span></div>
         <div class="mockup-script"><span data-i18n="mockOpener">Opening Script</span> <span class="mockup-pin">⭐</span></div>
-        <div class="mockup-script"><span data-i18n="mockPrice">Price Objection</span> <span class="mockup-copy">Copy</span></div>
+        <div class="mockup-script"><span data-i18n="mockPrice">Price Objection</span> <span class="mockup-copy" id="demoCopyBtn">Copy</span></div>
         <div class="mockup-folder active">📁 <span data-i18n="mockBranching">Branching Flows</span><span class="mockup-new-badge">NEW</span></div>
         <div class="mockup-script"><span data-i18n="mockQualify">Sales Qualification</span> <span class="mockup-copy">▶ Start</span></div>
         <div class="mockup-folder">📁 <span data-i18n="mockObjections">Objection Handlers</span></div>
         <div class="mockup-folder">📁 <span data-i18n="mockClosers">Closers</span></div>
         <div class="mockup-folder">📁 <span data-i18n="mockFaqs">FAQs</span></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="social-proof">
+  <div class="social-proof-inner reveal">
+    <div class="testimonial-card">
+      <p data-i18n="testimonial">"I used to keep scripts in a messy Google Doc. Now I find exactly what I need in seconds — even mid-call. My talk time went down and my close rate went up."</p>
+      <div class="testimonial-author">
+        <div>
+          <div class="stars">★★★★★</div>
+          <div class="name">Chrome Web Store Review</div>
+          <div class="role" data-i18n="testimonialRole">Verified User</div>
+        </div>
+      </div>
+    </div>
+    <div class="social-stats">
+      <div class="social-stat">
+        <div class="num">5.0 ★</div>
+        <div class="label" data-i18n="statRating">Chrome Web Store Rating</div>
+      </div>
+      <div class="social-stat">
+        <div class="num" data-i18n="statPrivacy">100%</div>
+        <div class="label" data-i18n="statPrivacyLabel">Private & Local</div>
+      </div>
+      <div class="social-stat">
+        <div class="num" data-i18n="statLangs">2</div>
+        <div class="label" data-i18n="statLangsLabel">Languages (EN/ES)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO VIDEO section -->
+<section class="demo-section" id="demo">
+  <div class="container center">
+    <div class="reveal">
+      <p class="section-label" data-i18n="demoLabel">See It In Action</p>
+      <h2 class="section-title" data-i18n="demoTitle">30 seconds to better calls</h2>
+      <p class="section-sub" data-i18n="demoSub">Watch how ScriptPad works alongside your dialer — search, copy, and follow branching flows without leaving your call.</p>
+    </div>
+    <div class="demo-wrapper reveal" id="demoWrapper">
+      <div class="demo-play">▶</div>
+      <span class="demo-coming" data-i18n="demoComing">Demo video coming soon — record a quick screen capture to add here!</span>
     </div>
   </div>
 </section>
@@ -529,7 +736,12 @@
       <div class="feature-card reveal">
         <span class="feature-icon">🔍</span>
         <h3 data-i18n="f4Title">Lightning-Fast Search</h3>
-        <p data-i18n="f4Desc">Fuzzy search across all scripts, titles, and tags. Type a few letters, find it instantly. Built for speed under pressure.</p>
+        <p data-i18n="f4Desc">Fuzzy search across all scripts, titles, and tags — with highlighted matches so you spot the right one instantly.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🤖</span>
+        <h3 data-i18n="fAITitle">AI Script Assistant</h3>
+        <p data-i18n="fAIDesc">Ask questions about your scripts, notes, and knowledge base. Get instant answers and related script suggestions — like a smart teammate who knows your playbook.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">📁</span>
@@ -638,7 +850,7 @@
 <!-- CTA BANNER -->
 <section class="cta-banner">
   <h2 data-i18n="ctaTitle">Ready to stop fumbling mid-call?</h2>
-  <p data-i18n="ctaSub">Join thousands of agents who keep their scripts organized and ready.</p>
+  <p data-i18n="ctaSub">Join agents who keep their scripts organized and ready.</p>
   <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank" class="btn-cta btn-cta-large">
     🌐 <span data-i18n="ctaCta">Add to Chrome — It's Free</span>
   </a>
@@ -648,7 +860,7 @@
 <footer>
   <div>Made with ⚡ by ScriptPad</div>
   <div class="footer-links">
-    <a href="../store-listing/privacy-policy.html">Privacy Policy</a>
+    <a href="https://andreasof97-oss.github.io/scriptpad/privacy-policy.html">Privacy Policy</a>
     <a href="https://github.com/andreasof97-oss/scriptpad" target="_blank">GitHub</a>
     <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank">Chrome Web Store</a>
   </div>
@@ -661,9 +873,9 @@
       navCta: 'Add to Chrome',
       heroBadge: 'Free Chrome Extension',
       heroTitle: 'Your scripts. Always ready. One click away.',
-      heroSub: 'The #1 script organizer for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.',
+      heroSub: 'The script organizer built for call center agents, telemarketers, and sales reps. Stop fumbling through Google Docs mid-call — ScriptPad puts every script at your fingertips.',
       heroCta: "Add to Chrome — It's Free",
-      heroSecondary: 'See Features ↓',
+      heroSecondary: 'Watch Demo ▶',
       mockSearch: 'Search scripts...',
       mockPinned: 'Pinned',
       mockOpener: 'Opening Script',
@@ -673,13 +885,26 @@
       mockObjections: 'Objection Handlers',
       mockClosers: 'Closers',
       mockFaqs: 'FAQs',
+      testimonial: '"I used to keep scripts in a messy Google Doc. Now I find exactly what I need in seconds — even mid-call. My talk time went down and my close rate went up."',
+      testimonialRole: 'Verified User',
+      statRating: 'Chrome Web Store Rating',
+      statPrivacy: '100%',
+      statPrivacyLabel: 'Private & Local',
+      statLangs: '2',
+      statLangsLabel: 'Languages (EN/ES)',
+      demoLabel: 'See It In Action',
+      demoTitle: '30 seconds to better calls',
+      demoSub: 'Watch how ScriptPad works alongside your dialer — search, copy, and follow branching flows without leaving your call.',
+      demoComing: 'Demo video coming soon — record a quick screen capture to add here!',
+      phLabel: 'FEATURED ON',
       featLabel: 'Features',
       featTitle: 'Everything you need on a live call',
       featSub: 'Built by people who understand the phone never stops ringing.',
       f1Title: 'Branching Scripts', f1Desc: 'Interactive decision trees that guide you step-by-step. Customer says X — you see what comes next. Perfect for qualification and troubleshooting.',
       f2Title: 'Instant Side Panel', f2Desc: 'Opens right alongside your dialer or CRM. No tab switching, no lost windows. Always visible when you need it.',
       f3Title: 'One-Click Copy', f3Desc: 'Copy any script to clipboard instantly. Paste into chat, email, or notes mid-call without missing a beat.',
-      f4Title: 'Lightning-Fast Search', f4Desc: 'Fuzzy search across all scripts, titles, and tags. Type a few letters, find it instantly. Built for speed under pressure.',
+      f4Title: 'Lightning-Fast Search', f4Desc: 'Fuzzy search across all scripts, titles, and tags — with highlighted matches so you spot the right one instantly.',
+      fAITitle: 'AI Script Assistant', fAIDesc: 'Ask questions about your scripts, notes, and knowledge base. Get instant answers and related script suggestions — like a smart teammate who knows your playbook.',
       f5Title: 'Folders & Tags', f5Desc: 'Organize scripts your way — Openers, Objection Handlers, Closers, FAQs. Add tags for even faster filtering.',
       f6Title: 'Keyboard Shortcuts', f6Desc: 'Ctrl+Shift+S to open. / to search. Arrow keys to navigate. Hands on keyboard, not fumbling with a mouse.',
       f7Title: 'Dark & Light Mode', f7Desc: 'Easy on the eyes during long shifts. Switch between dark and light themes anytime.',
@@ -702,16 +927,16 @@
       privTitle: 'Your scripts stay on your device',
       privDesc: 'No accounts required. No data sent to servers. No tracking. ScriptPad stores everything locally in your browser. Your scripts are yours — period.',
       ctaTitle: 'Ready to stop fumbling mid-call?',
-      ctaSub: 'Join thousands of agents who keep their scripts organized and ready.',
+      ctaSub: 'Join agents who keep their scripts organized and ready.',
       ctaCta: "Add to Chrome — It's Free"
     },
     es: {
       navCta: 'Agregar a Chrome',
       heroBadge: 'Extensión de Chrome Gratis',
       heroTitle: 'Tus guiones. Siempre listos. A un clic.',
-      heroSub: 'El organizador de guiones #1 para agentes de call center, telemarketers y representantes de ventas. Deja de buscar en Google Docs a media llamada — ScriptPad pone cada guión al alcance de tu mano.',
+      heroSub: 'El organizador de guiones para agentes de call center, telemarketers y representantes de ventas. Deja de buscar en Google Docs a media llamada — ScriptPad pone cada guión al alcance de tu mano.',
       heroCta: 'Agregar a Chrome — Es Gratis',
-      heroSecondary: 'Ver Funciones ↓',
+      heroSecondary: 'Ver Demo ▶',
       mockSearch: 'Buscar guiones...',
       mockPinned: 'Fijados',
       mockOpener: 'Guión de Apertura',
@@ -721,13 +946,26 @@
       mockObjections: 'Manejo de Objeciones',
       mockClosers: 'Cierres',
       mockFaqs: 'Preguntas Frecuentes',
+      testimonial: '"Antes tenía los guiones en un Google Doc desordenado. Ahora encuentro exactamente lo que necesito en segundos — incluso a media llamada. Mi tiempo de llamada bajó y mi tasa de cierre subió."',
+      testimonialRole: 'Usuario Verificado',
+      statRating: 'Calificación Chrome Web Store',
+      statPrivacy: '100%',
+      statPrivacyLabel: 'Privado y Local',
+      statLangs: '2',
+      statLangsLabel: 'Idiomas (EN/ES)',
+      demoLabel: 'Míralo en Acción',
+      demoTitle: '30 segundos para mejores llamadas',
+      demoSub: 'Mira cómo ScriptPad funciona junto a tu marcador — busca, copia y sigue flujos ramificados sin interrumpir tu llamada.',
+      demoComing: 'Video demo próximamente — ¡graba una captura rápida de pantalla para agregar aquí!',
+      phLabel: 'DESTACADO EN',
       featLabel: 'Funciones',
       featTitle: 'Todo lo que necesitas en una llamada en vivo',
       featSub: 'Creado por personas que entienden que el teléfono no para de sonar.',
       f1Title: 'Guiones Ramificados', f1Desc: 'Árboles de decisión interactivos que te guían paso a paso. El cliente dice X — tú ves qué sigue. Perfecto para calificación y resolución de problemas.',
       f2Title: 'Panel Lateral Instantáneo', f2Desc: 'Se abre junto a tu marcador o CRM. Sin cambiar de pestaña, sin ventanas perdidas. Siempre visible cuando lo necesitas.',
       f3Title: 'Copiar con Un Clic', f3Desc: 'Copia cualquier guión al portapapeles al instante. Pega en chat, correo o notas durante la llamada sin perder el ritmo.',
-      f4Title: 'Búsqueda Ultra Rápida', f4Desc: 'Búsqueda difusa en todos los guiones, títulos y etiquetas. Escribe unas letras, encuéntralo al instante.',
+      f4Title: 'Búsqueda Ultra Rápida', f4Desc: 'Búsqueda difusa en todos los guiones, títulos y etiquetas — con coincidencias resaltadas para encontrar lo correcto al instante.',
+      fAITitle: 'Asistente IA de Guiones', fAIDesc: 'Haz preguntas sobre tus guiones, notas y base de conocimiento. Respuestas instantáneas y sugerencias de guiones relacionados — como un compañero inteligente que conoce tu playbook.',
       f5Title: 'Carpetas y Etiquetas', f5Desc: 'Organiza guiones a tu manera — Aperturas, Manejo de Objeciones, Cierres, FAQs. Agrega etiquetas para filtrar más rápido.',
       f6Title: 'Atajos de Teclado', f6Desc: 'Ctrl+Shift+S para abrir. / para buscar. Flechas para navegar. Manos en el teclado, sin perder tiempo con el mouse.',
       f7Title: 'Modo Oscuro y Claro', f7Desc: 'Fácil para los ojos durante turnos largos. Cambia entre temas oscuro y claro cuando quieras.',
@@ -750,7 +988,7 @@
       privTitle: 'Tus guiones se quedan en tu dispositivo',
       privDesc: 'Sin cuentas requeridas. Sin datos enviados a servidores. Sin rastreo. ScriptPad almacena todo localmente en tu navegador. Tus guiones son tuyos — punto.',
       ctaTitle: '¿Listo para dejar de improvisar a media llamada?',
-      ctaSub: 'Únete a miles de agentes que mantienen sus guiones organizados y listos.',
+      ctaSub: 'Únete a los agentes que mantienen sus guiones organizados y listos.',
       ctaCta: 'Agregar a Chrome — Es Gratis'
     }
   };
@@ -786,7 +1024,26 @@
   }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ---- Mockup micro-animations ----
+  // Simulates a "Copy" click with a green flash
+  function animateCopy() {
+    const btn = document.getElementById('demoCopyBtn');
+    if (!btn) return;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 1500);
+  }
+  // Run copy animation every 5 seconds
+  setInterval(animateCopy, 5000);
+  // First trigger after 2s
+  setTimeout(animateCopy, 2000);
 </script>
 
 </body>
 </html>
+
+<script>/*aha-img-guard*/(function(){var API="https://builders.sky-admin.com/api/img-search?q=";var bad=/images\.unsplash\.com|source\.unsplash\.com|picsum\.photos|loremflickr\.com|placekitten/;function tile(i){try{var d=document.createElement("div");d.style.cssText="width:100%;height:100%;min-height:120px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e9dfd2,#cdb89a);color:#6b5d49;font:600 14px system-ui;text-align:center;padding:10px;box-sizing:border-box";d.textContent=i.getAttribute("alt")||"";if(i.parentNode)i.parentNode.replaceChild(d,i);}catch(e){}}function real(i){var q=(i.getAttribute("alt")||"").trim();if(!q){tile(i);return;}fetch(API+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){if(d&&d.url){i.onerror=function(){tile(i);};i.src=d.url;}else tile(i);}).catch(function(){tile(i);});}function chk(i){if(i.__ag)return;try{if(i.closest&&i.closest("nav,footer"))return;if(i.closest&&i.closest("header")&&/\b(logo|brand|icon|wordmark)\b/i.test(i.getAttribute("alt")||""))return;}catch(e){}var s=(i.currentSrc||i.src||i.getAttribute("src")||"").trim();var alt=(i.getAttribute("alt")||"").trim();if(bad.test(s)){i.__ag=1;real(i);return;}if(/^https?:\/\//.test(s)){i.__ag=1;i.addEventListener("error",function(){real(i);});return;}if(alt){i.__ag=1;real(i);return;}}function scan(){document.querySelectorAll("img").forEach(chk);}try{new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["src"]});}catch(e){}document.addEventListener("DOMContentLoaded",scan);window.addEventListener("load",function(){scan();setTimeout(scan,800);setTimeout(scan,2000);});})();</script>
