@@ -1576,12 +1576,82 @@
             <span class="team-role ${isManager ? 'manager' : ''}">${isManager ? t('roleManager') : t('roleAgent')}</span>
           </div>
           ${isManager ? `<div class="team-code-row"><span class="text-muted">${t('inviteCode')}:</span> <code class="team-code">${esc(team.invite_code)}</code></div>` : ''}
-          <button class="team-leave-btn danger-icon" title="${t('leaveTeam')}">${t('leaveTeam')}</button>
+          <div class="team-actions">
+            ${isManager ? `<button class="team-members-btn">👥 ${t('manageMembers')}</button>` : ''}
+            <button class="team-leave-btn danger-icon" title="${t('leaveTeam')}">${t('leaveTeam')}</button>
+          </div>
+          <div class="team-members-panel" style="display:none;"></div>
         `;
         div.querySelector('.team-leave-btn').addEventListener('click', () => leaveTeamConfirm(team));
+        const membersBtn = div.querySelector('.team-members-btn');
+        if (membersBtn) {
+          const panelEl = div.querySelector('.team-members-panel');
+          membersBtn.addEventListener('click', () => toggleMembersPanel(team, panelEl));
+        }
         list.appendChild(div);
       });
     }
+  }
+
+  function toggleMembersPanel(team, panelEl) {
+    if (!panelEl) return;
+    if (panelEl.style.display !== 'none') { panelEl.style.display = 'none'; return; }
+    panelEl.style.display = 'block';
+    loadMembersPanel(team, panelEl);
+  }
+
+  async function loadMembersPanel(team, panelEl) {
+    panelEl.innerHTML = `<p class="text-muted">${t('loading')}…</p>`;
+    let members = [];
+    try { members = await Teams.getMembers(team.id); }
+    catch (err) { panelEl.innerHTML = `<p class="text-muted">${t('teamError')}</p>`; return; }
+
+    const me = state.user;
+    panelEl.innerHTML = '';
+    members.forEach(m => {
+      const isMe = me && m.user_id === me.id;
+      const isOwner = m.user_id === team.owner_id;
+      const row = document.createElement('div');
+      row.className = 'member-row';
+      row.innerHTML = `
+        <span class="member-email">${esc(m.email || t('roleAgent'))}${isMe ? ' (you)' : ''}</span>
+        <span class="member-role ${m.role === 'manager' ? 'manager' : ''}">${m.role === 'manager' ? t('roleManager') : t('roleAgent')}</span>
+        <span class="member-actions"></span>
+      `;
+      const actions = row.querySelector('.member-actions');
+      if (!isMe && !isOwner) {
+        if (m.role !== 'manager') {
+          const promote = document.createElement('button');
+          promote.className = 'member-btn';
+          promote.textContent = t('makeManager');
+          promote.addEventListener('click', async () => {
+            try { await Teams.setMemberRole(team.id, m.user_id, 'manager'); loadMembersPanel(team, panelEl); showToast(t('roleUpdated')); }
+            catch (e) { showToast(t('teamError')); }
+          });
+          actions.appendChild(promote);
+        } else {
+          const demote = document.createElement('button');
+          demote.className = 'member-btn';
+          demote.textContent = t('makeAgent');
+          demote.addEventListener('click', async () => {
+            try { await Teams.setMemberRole(team.id, m.user_id, 'agent'); loadMembersPanel(team, panelEl); showToast(t('roleUpdated')); }
+            catch (e) { showToast(t('teamError')); }
+          });
+          actions.appendChild(demote);
+        }
+        const remove = document.createElement('button');
+        remove.className = 'member-btn danger-icon';
+        remove.textContent = t('removeMember');
+        remove.addEventListener('click', () => {
+          showConfirm(t('removeMember'), t('removeMemberConfirm'), async () => {
+            try { await Teams.removeMember(team.id, m.user_id); loadMembersPanel(team, panelEl); showToast(t('memberRemoved')); }
+            catch (e) { showToast(t('teamError')); }
+          });
+        });
+        actions.appendChild(remove);
+      }
+      panelEl.appendChild(row);
+    });
   }
 
   async function createTeamFlow() {
@@ -1634,12 +1704,23 @@
     if (!script) return;
     const teams = (state.myTeams || []).filter(tm => tm.role === 'manager');
     if (!teams.length) { showToast(t('needManagerTeam')); return; }
-    // If multiple managed teams, pick the first (simple foundation)
-    const team = teams[0];
+
+    let team = teams[0];
+    // If the manager runs multiple teams, let them pick which one
+    if (teams.length > 1) {
+      const names = teams.map((tm, i) => `${i + 1}. ${tm.name}`).join('\n');
+      const pick = prompt(`${t('pickTeam')}\n${names}`, '1');
+      if (!pick) return;
+      const idx = parseInt(pick, 10) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= teams.length) { showToast(t('teamError')); return; }
+      team = teams[idx];
+    }
+
     try {
-      await Teams.pushScript(team.id, script);
+      const res = await Teams.pushScript(team.id, script);
       await refreshSharedScripts();
-      showToast(t('scriptPushed'));
+      if (state.currentView === 'main') renderMain();
+      showToast(res && res._updated ? t('scriptUpdatedTeam') : t('scriptPushed'));
     } catch (err) {
       showToast(t('teamError'));
     }

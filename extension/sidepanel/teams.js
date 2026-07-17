@@ -119,7 +119,9 @@ const Teams = (() => {
 
   // ---- Shared scripts (the "library") ----
 
-  // Manager pushes a local script into the team library
+  // Manager pushes a local script into the team library.
+  // If a shared copy with the same title already exists in this team, UPDATE it
+  // (true "push updates") instead of creating a duplicate.
   async function pushScript(teamId, script) {
     const user = Auth.getUser();
     const row = {
@@ -133,13 +135,33 @@ const Teams = (() => {
       updated_by: user ? user.id : null,
       updated_at: new Date().toISOString()
     };
+
+    // Look for an existing shared script with the same title in this team
+    const { data: existing } = await client
+      .from('shared_scripts')
+      .select('id')
+      .eq('team_id', teamId)
+      .eq('title', row.title)
+      .maybeSingle();
+
+    if (existing && existing.id) {
+      const { data, error } = await client
+        .from('shared_scripts')
+        .update(row)
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { ...data, _updated: true };
+    }
+
     const { data, error } = await client
       .from('shared_scripts')
       .insert(row)
       .select()
       .single();
     if (error) throw error;
-    return data;
+    return { ...data, _updated: false };
   }
 
   async function updateSharedScript(sharedId, script) {
