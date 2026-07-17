@@ -1,4 +1,4 @@
-<!-- aha-build-id: bmrpeds8lhvapm9jk -->
+<!-- aha-build-id: bmrper93z59ppaytr -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -878,8 +878,24 @@
     <a href="https://andreasof97-oss.github.io/scriptpad/privacy-policy.html">Privacy Policy</a>
     <a href="https://github.com/andreasof97-oss/scriptpad" target="_blank">GitHub</a>
     <a href="https://chromewebstore.google.com/detail/scriptpad/edbmgpecjaikknoacfeaogalfgkhdbik" target="_blank">Chrome Web Store</a>
+    <a href="#" id="forgotPwLink">Forgot password?</a>
   </div>
 </footer>
+
+<!-- FORGOT PASSWORD OVERLAY (request a reset email) -->
+<div id="pwForgotOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,0.92);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#151a24;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.5);position:relative;">
+    <button id="pwForgotClose" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#9aa4b2;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+    <div style="font-size:30px;text-align:center;margin-bottom:6px;">🔑</div>
+    <h2 style="color:#fff;text-align:center;margin:0 0 6px;font-size:20px;">Reset your password</h2>
+    <p style="color:#9aa4b2;text-align:center;margin:0 0 20px;font-size:14px;">Enter your email and we'll send you a reset link.</p>
+    <input id="pwForgotEmail" type="email" placeholder="you@example.com" autocomplete="email"
+      style="width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1017;color:#fff;font-size:15px;">
+    <button id="pwForgotSubmit"
+      style="width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Send reset link</button>
+    <div id="pwForgotMsg" style="text-align:center;margin-top:14px;font-size:14px;min-height:20px;"></div>
+  </div>
+</div>
 
 <!-- PASSWORD RECOVERY OVERLAY (shown only when arriving from a reset email) -->
 <div id="pwRecoveryOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,0.92);align-items:center;justify-content:center;padding:20px;">
@@ -950,6 +966,54 @@
     [newIn, confirmIn].forEach(function (el) {
       el.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit.click(); });
     });
+  })();
+
+  // ---- Forgot password flow (request a reset email) ----
+  (function () {
+    var SUPABASE_URL = 'https://okwbfzzbysfkpiuobjkx.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rd2JmenpieXNma3BpdW9iamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzUyNTQsImV4cCI6MjA5NjYxMTI1NH0.VY6w2ul8SCcTYfTeq07y_yXiw5lEkKITZykY_wo1oYk';
+    var link = document.getElementById('forgotPwLink');
+    var overlay = document.getElementById('pwForgotOverlay');
+    var closeBtn = document.getElementById('pwForgotClose');
+    var emailIn = document.getElementById('pwForgotEmail');
+    var submit = document.getElementById('pwForgotSubmit');
+    var msg = document.getElementById('pwForgotMsg');
+    if (!link || !overlay || !window.supabase) return;
+
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function setMsg(text, ok) {
+      msg.textContent = text;
+      msg.style.color = ok ? '#4ade80' : '#f87171';
+    }
+
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      setMsg('', true);
+      overlay.style.display = 'flex';
+      emailIn.focus();
+    });
+    closeBtn.addEventListener('click', function () { overlay.style.display = 'none'; });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.style.display = 'none'; });
+
+    submit.addEventListener('click', function () {
+      var email = emailIn.value.trim();
+      if (!email || email.indexOf('@') === -1) { setMsg('Please enter a valid email.', false); return; }
+      submit.disabled = true;
+      setMsg('Sending…', true);
+      client.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://andreasof97-oss.github.io/scriptpad/'
+      }).then(function (res) {
+        submit.disabled = false;
+        if (res.error) { setMsg(res.error.message || 'Something went wrong. Try again.', false); return; }
+        setMsg('✅ Check your email for the reset link!', true);
+      }).catch(function () {
+        submit.disabled = false;
+        setMsg('Something went wrong. Try again.', false);
+      });
+    });
+
+    emailIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit.click(); });
   })();
 </script>
 
