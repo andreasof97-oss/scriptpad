@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,38 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Require a signed-in ScriptPad user. The public anon key is a valid JWT but
+  // has role "anon"; supabase.auth.getUser() only returns a user for a real
+  // account token, so this rejects anonymous callers and stops the endpoint
+  // from being used to drain the AI budget.
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'auth_required' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  try {
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+    const { data: { user }, error: authErr } = await authClient.auth.getUser(token);
+    if (authErr || !user) {
+      return new Response(
+        JSON.stringify({ error: 'auth_required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  } catch (_e) {
+    return new Response(
+      JSON.stringify({ error: 'auth_required' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 

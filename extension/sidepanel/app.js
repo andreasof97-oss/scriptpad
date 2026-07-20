@@ -2669,6 +2669,15 @@
     const message = els.aiInput.value.trim();
     if (!message || state.aiLoading) return;
 
+    // The AI Assistant requires a signed-in account (the endpoint rejects
+    // anonymous calls to prevent abuse of the AI service).
+    const aiToken = Auth.getAccessToken ? await Auth.getAccessToken() : null;
+    if (!aiToken) {
+      state.aiMessages.push({ role: 'error', content: t('aiSignInRequired') });
+      renderAIMessages();
+      return;
+    }
+
     // Check usage limit
     const canUse = await StorageAPI.canUseAI(isPro());
     if (!canUse) {
@@ -2711,7 +2720,10 @@
     try {
       const response = await fetch(CONFIG.AI_ASSISTANT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${aiToken}`
+        },
         body: JSON.stringify({ message, context, history }),
         signal: abortController.signal
       });

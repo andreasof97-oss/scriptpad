@@ -117,6 +117,14 @@ const Auth = (() => {
     return client;
   }
 
+  // The current user's access token, used to authenticate calls to our
+  // edge functions (e.g. the AI Assistant). Null when signed out.
+  async function getAccessToken() {
+    if (!client) return null;
+    const { data } = await client.auth.getSession();
+    return data?.session?.access_token || null;
+  }
+
   function getPlan() {
     return currentPlan;
   }
@@ -141,6 +149,7 @@ const Auth = (() => {
     changePassword,
     getUser,
     getClient,
+    getAccessToken,
     getPlan,
     isPro,
     refreshPlan
