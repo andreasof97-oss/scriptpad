@@ -1123,15 +1123,20 @@
 
   function loadAccountState() {
     // Initialize Auth module with callback for state changes
-    Auth.init(({ user, plan }) => {
+    Auth.init(async ({ user, plan }) => {
       state.user = user;
       state.plan = plan;
       if (typeof Teams !== 'undefined' && Auth.getClient) {
         Teams.init(Auth.getClient());
       }
-      // Refresh shared team scripts whenever auth changes
-      refreshSharedScripts();
       updateAccountUI();
+      // Flip the Teams section between its signed-out and signed-in states
+      // right away, before waiting on the network below.
+      renderTeams();
+      // Refresh shared team scripts whenever auth changes
+      await refreshSharedScripts();
+      // Draw again now that the team list has actually loaded.
+      renderTeams();
       // Re-render current view to reflect plan changes
       if (state.currentView === 'main') {
         if (state.activeTab === 'notes') renderNotes();
@@ -1212,7 +1217,9 @@
         await Auth.signIn(email, password);
       }
 
-      showView('settings');
+      // openSettings() rather than showView() — the settings screen has to be
+      // re-rendered so the Teams section reflects the newly signed-in user.
+      openSettings();
       showToast(t('signIn') + ' ✓');
     } catch (err) {
       console.error('[ScriptPad] Auth error:', err);
