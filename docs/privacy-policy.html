@@ -22,6 +22,9 @@
     li { margin-bottom: 8px; }
     .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; }
     .highlight { background: #e8f4fd; padding: 16px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #3b82f6; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+    th, td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #f0f4f8; }
     a { color: #3b82f6; }
     hr { border: none; border-top: 1px solid #e0e0e0; margin: 32px 0; }
     .footer { color: #999; font-size: 13px; margin-top: 32px; }
@@ -29,49 +32,75 @@
 </head>
 <body>
   <h1>🔒 ScriptPad — Privacy Policy</h1>
-  <p class="subtitle">Last updated: May 20, 2026</p>
+  <p class="subtitle">Last updated: July 20, 2026</p>
 
   <div class="highlight">
-    <strong>TL;DR:</strong> ScriptPad stores everything locally on your device. We don't collect, transmit, or sell any of your data. Period.
+    <strong>In short:</strong> Your scripts and notes are stored on your own device and stay there by default. ScriptPad works fully without an account. Some optional features — signing in, Teams, the AI Assistant, and Pro subscriptions — do send specific data to our service providers. This page explains exactly what, and when.
   </div>
 
-  <h2>1. What Data Does ScriptPad Collect?</h2>
-  <p><strong>None.</strong> ScriptPad does not collect, store, or transmit any personal data to external servers.</p>
-  <p>All data you create within ScriptPad — including scripts, folders, settings, and preferences — is stored locally on your device using Chrome's built-in storage API (<code>chrome.storage.local</code>).</p>
+  <h2>1. Data Stored Locally on Your Device</h2>
+  <p>By default, everything you create in ScriptPad — your scripts, folders, tags, notes, knowledge-base entries, and settings — is stored locally in your browser using Chrome's storage API (<code>chrome.storage.local</code>). If you never sign in, this data never leaves your device, and we never see it.</p>
+  <p>You can export all of it as a JSON file at any time via <strong>Settings → Export</strong>, and uninstalling ScriptPad removes it.</p>
 
-  <h2>2. What Permissions Does ScriptPad Use?</h2>
-  <p>ScriptPad requests the following Chrome permissions:</p>
+  <h2>2. Data We Collect When You Use Optional Features</h2>
+  <p>The following features are optional. You only share the data described if you choose to use them.</p>
+
+  <table>
+    <tr><th>Feature</th><th>What is sent, and to whom</th></tr>
+    <tr>
+      <td><strong>Account sign-in</strong></td>
+      <td>If you create an account, your email address and password are sent to <strong>Supabase</strong> (our authentication and database provider) to create and secure your account. Passwords are stored by Supabase in hashed form; we never see your password.</td>
+    </tr>
+    <tr>
+      <td><strong>Teams &amp; shared scripts</strong></td>
+      <td>If you create or join a team, the scripts shared to that team, the team name, invite code, and the email addresses of team members are stored in our <strong>Supabase</strong> database so team members can see the shared library.</td>
+    </tr>
+    <tr>
+      <td><strong>AI Assistant</strong></td>
+      <td>When you send a message to the AI Assistant, the text of your question, the relevant knowledge-base content you have saved, and your recent messages in that chat are sent — through our <strong>Supabase</strong> server — to <strong>Google</strong> (the Gemini AI model) to generate a reply. This text is not linked to your identity at Google. Do not put passwords or sensitive personal data into the AI Assistant.</td>
+    </tr>
+    <tr>
+      <td><strong>Pro subscription</strong></td>
+      <td>If you upgrade to Pro, your email address and account ID are used to create a subscription with <strong>PayPal</strong>, which processes the payment. Your card and billing details are handled entirely by PayPal — ScriptPad never receives or stores them.</td>
+    </tr>
+  </table>
+
+  <h2>3. Third-Party Service Providers</h2>
+  <p>ScriptPad relies on these providers only to deliver the features above. We do not sell your data, and we do not use advertising or tracking networks.</p>
   <ul>
-    <li><strong>storage</strong> — To save your scripts, folders, and settings locally on your device. This data never leaves your browser.</li>
-    <li><strong>sidePanel</strong> — To display ScriptPad as a side panel alongside your current tab, so you can reference scripts while working.</li>
+    <li><strong>Supabase</strong> — account authentication, database, and the servers that power Teams and the AI Assistant. See <a href="https://supabase.com/privacy">Supabase's privacy policy</a>.</li>
+    <li><strong>Google (Gemini)</strong> — generates AI Assistant responses. See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</li>
+    <li><strong>PayPal</strong> — processes Pro subscription payments. See <a href="https://www.paypal.com/privacy">PayPal's privacy policy</a>.</li>
   </ul>
-  <p>ScriptPad does <strong>not</strong> request access to your browsing history, tabs, web requests, or any website content.</p>
 
-  <h2>3. Does ScriptPad Share Data With Third Parties?</h2>
-  <p><strong>No.</strong> Since ScriptPad doesn't collect any data, there is nothing to share. We have no analytics, no tracking pixels, no advertising SDKs, and no third-party integrations that receive your data.</p>
-
-  <h2>4. Does ScriptPad Use Cookies or Tracking?</h2>
-  <p><strong>No.</strong> ScriptPad does not use cookies, fingerprinting, or any form of user tracking.</p>
-
-  <h2>5. Data Storage & Security</h2>
-  <p>Your scripts and settings are stored using Chrome's <code>chrome.storage.local</code> API, which keeps data sandboxed within the extension on your device. This means:</p>
+  <h2>4. Chrome Permissions</h2>
+  <p>ScriptPad requests only two Chrome permissions:</p>
   <ul>
-    <li>Your data stays on your computer</li>
-    <li>Other extensions cannot access your ScriptPad data</li>
-    <li>Uninstalling ScriptPad removes all stored data</li>
-    <li>You can export your data as JSON at any time via Settings → Export</li>
+    <li><strong>storage</strong> — to save your scripts, notes, and settings.</li>
+    <li><strong>sidePanel</strong> — to display ScriptPad as a side panel next to your current tab.</li>
+  </ul>
+  <p>ScriptPad does <strong>not</strong> request access to your browsing history, your tabs, your web requests, or the content of the websites you visit.</p>
+
+  <h2>5. Analytics &amp; Tracking</h2>
+  <p>ScriptPad does not use cookies, advertising, fingerprinting, tracking pixels, or third-party analytics SDKs. The only "usage" data is a private count, stored locally on your device, of how often you use each script — used to show your "Most Used" scripts. It is never transmitted.</p>
+
+  <h2>6. Data Retention &amp; Deletion</h2>
+  <ul>
+    <li><strong>Local data:</strong> removed when you uninstall the extension or clear it in Settings.</li>
+    <li><strong>Account &amp; team data:</strong> if you want your account and any associated data deleted from our servers, email us at the address below and we will remove it.</li>
+    <li>Leaving a team removes your membership; you can delete shared scripts you manage from the team library.</li>
   </ul>
 
-  <h2>6. Children's Privacy</h2>
-  <p>ScriptPad is designed for professional use by call center agents and sales representatives. It is not directed at children under 13 and does not knowingly collect any information from children.</p>
+  <h2>7. Children's Privacy</h2>
+  <p>ScriptPad is a professional tool for call center agents, sales representatives, and business users. It is not directed at children under 13 and does not knowingly collect information from children.</p>
 
-  <h2>7. Changes to This Policy</h2>
-  <p>If we ever change this privacy policy (for example, if we add optional cloud sync features in the future), we will update this page and note the date of the change. Any features that involve data transmission will always be opt-in with clear disclosure.</p>
+  <h2>8. Changes to This Policy</h2>
+  <p>If we change this policy, we will update this page and the "Last updated" date above. Significant changes to how data is handled will be reflected here before they take effect.</p>
 
-  <h2>8. Contact</h2>
-  <p>If you have questions about this privacy policy, please reach out:</p>
+  <h2>9. Contact</h2>
+  <p>Questions about this policy or requests to delete your data:</p>
   <ul>
-    <li>Email: <a href="mailto:scriptpad.app@gmail.com">scriptpad.app@gmail.com</a></li>
+    <li>Email: <a href="mailto:andreasof97@gmail.com">andreasof97@gmail.com</a></li>
   </ul>
 
   <hr>
