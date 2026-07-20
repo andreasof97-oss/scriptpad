@@ -2,10 +2,25 @@
 # Register webhook URL with PayPal Sandbox
 # Run this once to tell PayPal where to send subscription events
 
-# ScriptPad sandbox credentials
-CLIENT_ID="AR1mAO72rucY1O9XePzUBKeZNht-_20g0CQdjupY-sJzJqJ799A2zfCOstrJmz5UbDSwfU0ZRqIMKiWF"
-CLIENT_SECRET="EHaMoKVNUt6JN-1OmLzlj8JXNdpb716-Uro5QBbtQRQ40-rxSe6ID6jEUcjyHqcgbuN4xrsLd4r5bIRJ"
-PAYPAL_BASE="https://api-m.sandbox.paypal.com"
+# Credentials are read from the environment — never hardcode them here.
+# This file is committed to a public repo; anything written below is public.
+#
+# Run it like this (the leading space keeps the secret out of your shell history):
+#   export PAYPAL_CLIENT_ID="..."
+#   export PAYPAL_CLIENT_SECRET="..."
+#   ./scripts/register-paypal-webhook.sh
+#
+# Get sandbox credentials from developer.paypal.com → Sandbox → Apps & Credentials.
+CLIENT_ID="${PAYPAL_CLIENT_ID:-}"
+CLIENT_SECRET="${PAYPAL_CLIENT_SECRET:-}"
+PAYPAL_BASE="${PAYPAL_BASE:-https://api-m.sandbox.paypal.com}"
+
+if [ -z "$CLIENT_ID" ] || [ -z "$CLIENT_SECRET" ]; then
+  echo "ERROR: PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be set."
+  echo "See the comment at the top of this file for how to set them."
+  exit 1
+fi
+
 WEBHOOK_URL="https://okwbfzzbysfkpiuobjkx.supabase.co/functions/v1/paypal-webhook"
 
 echo "=== Getting PayPal access token ==="

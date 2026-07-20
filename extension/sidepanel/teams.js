@@ -42,25 +42,26 @@ const Teams = (() => {
     return team;
   }
 
+  // Joining goes through a database function rather than a direct query.
+  // Row Level Security hides a team from anyone who isn't already a member,
+  // so a would-be joiner cannot look the team up by invite code themselves —
+  // the lookup and the insert both have to happen server-side.
+  // Requires SUPABASE_TEAMS_JOIN_FIX.sql to have been run.
   async function joinTeam(inviteCode) {
     const user = Auth.getUser();
     if (!user) throw new Error('not_signed_in');
     const code = (inviteCode || '').trim().toUpperCase();
 
-    const { data: team, error } = await client
-      .from('teams')
-      .select('*')
-      .eq('invite_code', code)
-      .maybeSingle();
-    if (error) throw error;
+    const { data, error } = await client.rpc('join_team_by_code', { p_code: code });
+    if (error) {
+      const msg = String(error.message || '');
+      if (msg.includes('bad_code')) throw new Error('bad_code');
+      if (msg.includes('not_signed_in')) throw new Error('not_signed_in');
+      throw error;
+    }
+
+    const team = Array.isArray(data) ? data[0] : data;
     if (!team) throw new Error('bad_code');
-
-    const { error: jErr } = await client
-      .from('team_members')
-      .insert({ team_id: team.id, user_id: user.id, email: user.email, role: 'agent' });
-    // Ignore duplicate (already a member)
-    if (jErr && !String(jErr.message || '').includes('duplicate')) throw jErr;
-
     return team;
   }
 
