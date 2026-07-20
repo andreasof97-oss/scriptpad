@@ -5,3 +5,6 @@ scriptpad-extension.zip
 mockup/scriptpad-extension.zip
 store-listing/scriptpad-v1.0.0.zip
 store-listing/*.tar.gz
+
+# Claude Code local settings
+.claude/settings.local.json
