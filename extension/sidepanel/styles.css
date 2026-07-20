@@ -1293,7 +1293,7 @@ body {
   display: flex;
   gap: 8px;
 }
-.confirm-cancel, .confirm-delete {
+.confirm-cancel, .confirm-delete, .confirm-primary {
   flex: 1;
   padding: 10px;
   border-radius: var(--radius);
@@ -1314,6 +1314,12 @@ body {
   color: #fff;
 }
 .confirm-delete:hover { opacity: 0.85; }
+/* Neutral confirm button for non-destructive actions (e.g. "Switch") */
+.confirm-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.confirm-primary:hover { opacity: 0.85; }
 
 /* ===== EMPTY STATES ===== */
 .empty-state {

@@ -1918,14 +1918,18 @@
 
   async function importScripts(file) {
     const text = await file.text();
-    const success = await StorageAPI.importData(text);
-    if (success) {
-      await loadData();
-      renderMain();
-      showToast(t('imported'));
-    } else {
-      showToast(t('importError'));
-    }
+    // Importing REPLACES the entire library — there is no undo. Warn first so a
+    // user doesn't wipe their scripts expecting import to merge/add.
+    showConfirm(t('importConfirmTitle'), t('importConfirmText'), async () => {
+      const success = await StorageAPI.importData(text);
+      if (success) {
+        await loadData();
+        renderMain();
+        showToast(t('imported'));
+      } else {
+        showToast(t('importError'));
+      }
+    }, { okLabel: t('importReplace') });
   }
 
   // ---- Delete Script ----
@@ -1959,9 +1963,17 @@
 
   // ---- Confirm Dialog ----
   let confirmCallback = null;
-  function showConfirm(title, text, onConfirm) {
+  // opts.okLabel — text for the confirm button (defaults to a generic "OK")
+  // opts.danger — true (default) shows the red button; false shows a neutral
+  //   accent button for non-destructive actions like "Switch".
+  function showConfirm(title, text, onConfirm, opts = {}) {
     els.confirmTitle.textContent = title;
     els.confirmText.textContent = text;
+    els.confirmCancel.textContent = t('cancel');
+    els.confirmOk.textContent = opts.okLabel || t('confirmOk');
+    const danger = opts.danger !== false;
+    els.confirmOk.classList.toggle('confirm-delete', danger);
+    els.confirmOk.classList.toggle('confirm-primary', !danger);
     confirmCallback = onConfirm;
     els.overlay.classList.add('active');
   }
@@ -1988,8 +2000,16 @@
   }
 
   // ---- Branching Script Viewer ----
+  // Look a script up by id in the user's own scripts OR the team-shared ones.
+  // Shared scripts have IDs like "shared:<uuid>" and live in state.sharedScripts.
+  function findViewableScript(scriptId) {
+    return state.scripts.find(s => s.id === scriptId)
+      || (state.sharedScripts || []).find(s => s.id === scriptId)
+      || null;
+  }
+
   function openBranchingScript(scriptId) {
-    const script = state.scripts.find(s => s.id === scriptId);
+    const script = findViewableScript(scriptId);
     if (!script || script.type !== 'branching') return;
 
     state.currentScriptId = scriptId;
@@ -2001,15 +2021,32 @@
       `<span class="tag">#${esc(tag)}</span>`
     ).join('');
 
-    const pinSpan = els.branchingPinBtn.querySelector('span');
-    if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
+    // Shared team scripts are read-only: hide edit/pin/delete, show a note.
+    const oldBadge = document.getElementById('branchingSharedBadge');
+    if (oldBadge) oldBadge.remove();
+    if (script.shared) {
+      if (els.branchingEditBtn) els.branchingEditBtn.style.display = 'none';
+      if (els.branchingPinBtn) els.branchingPinBtn.style.display = 'none';
+      if (els.branchingDeleteBtn) els.branchingDeleteBtn.style.display = 'none';
+      const badge = document.createElement('div');
+      badge.id = 'branchingSharedBadge';
+      badge.className = 'script-stats-badge';
+      badge.innerHTML = `<span class="stat-item">👥 ${esc(script.teamName || t('teamLibrary'))} · ${t('sharedReadOnly')}</span>`;
+      els.branchingViewTags.after(badge);
+    } else {
+      if (els.branchingEditBtn) els.branchingEditBtn.style.display = '';
+      if (els.branchingPinBtn) els.branchingPinBtn.style.display = '';
+      if (els.branchingDeleteBtn) els.branchingDeleteBtn.style.display = '';
+      const pinSpan = els.branchingPinBtn.querySelector('span');
+      if (pinSpan) pinSpan.textContent = script.pinned ? t('unpin') : t('pin');
+    }
 
     renderBranchingNode();
     showView('branching');
   }
 
   function renderBranchingNode() {
-    const script = state.scripts.find(s => s.id === state.currentScriptId);
+    const script = findViewableScript(state.currentScriptId);
     if (!script) return;
 
     const node = script.nodes.find(n => n.id === state.currentNodeId);
@@ -2079,7 +2116,7 @@
   }
 
   function branchingStartOver() {
-    const script = state.scripts.find(s => s.id === state.currentScriptId);
+    const script = findViewableScript(state.currentScriptId);
     if (!script) return;
     state.currentNodeId = script.startNodeId;
     state.branchingPath = [script.startNodeId];
@@ -2087,7 +2124,7 @@
   }
 
   function branchingCopyCurrentNode() {
-    const script = state.scripts.find(s => s.id === state.currentScriptId);
+    const script = findViewableScript(state.currentScriptId);
     if (!script) return;
     const node = script.nodes.find(n => n.id === state.currentNodeId);
     if (!node) return;
@@ -3207,14 +3244,14 @@
       els.switchTypeBtnStandard.addEventListener('click', () => {
         showConfirm(t('switchToBranching'), t('switchTypeWarning'), () => {
           openBranchingEditor(state.editingScriptId);
-        });
+        }, { okLabel: t('switchAction'), danger: false });
       });
     }
     if (els.switchTypeBtnBranching) {
       els.switchTypeBtnBranching.addEventListener('click', () => {
         showConfirm(t('switchToStandard'), t('switchTypeWarning'), () => {
           openEditor(state.editingScriptId);
-        });
+        }, { okLabel: t('switchAction'), danger: false });
       });
     }
 

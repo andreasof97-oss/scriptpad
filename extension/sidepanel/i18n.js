@@ -28,6 +28,8 @@ const translations = {
     delete: 'Delete',
     save: 'Save',
     cancel: 'Cancel',
+    confirmOk: 'OK',
+    switchAction: 'Switch',
     back: '←',
     close: 'Close',
 
@@ -64,6 +66,9 @@ const translations = {
     imported: 'Scripts imported! ✓',
     importError: 'Invalid file format',
     exported: 'Scripts exported! ✓',
+    importConfirmTitle: 'Replace everything with this file?',
+    importConfirmText: 'Importing replaces all your current scripts, folders, notes and settings — this cannot be undone. If you have not backed up, cancel and use Export first.',
+    importReplace: 'Replace',
 
     // Settings
     settings: 'Settings',
@@ -374,6 +379,8 @@ const translations = {
     delete: 'Eliminar',
     save: 'Guardar',
     cancel: 'Cancelar',
+    confirmOk: 'OK',
+    switchAction: 'Cambiar',
     back: '←',
     close: 'Cerrar',
 
@@ -410,6 +417,9 @@ const translations = {
     imported: '¡Scripts importados! ✓',
     importError: 'Formato de archivo inválido',
     exported: '¡Scripts exportados! ✓',
+    importConfirmTitle: '¿Reemplazar todo con este archivo?',
+    importConfirmText: 'Importar reemplaza todos tus scripts, carpetas, notas y ajustes actuales — esto no se puede deshacer. Si no has hecho una copia de seguridad, cancela y usa Exportar primero.',
+    importReplace: 'Reemplazar',
 
     // Settings
     settings: 'Configuración',
