@@ -6,8 +6,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
 const PAYPAL_WEBHOOK_ID = Deno.env.get('PAYPAL_WEBHOOK_ID') || ''
-// Hardcode sandbox URL — change to https://api-m.paypal.com for production
-const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.sandbox.paypal.com'
+// Defaults to LIVE (the product ships in live mode). For sandbox testing,
+// set PAYPAL_API_BASE=https://api-m.sandbox.paypal.com in the function env.
+const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -61,10 +62,12 @@ async function verifyWebhookSignature(
   headers: Headers,
   body: string
 ): Promise<boolean> {
-  // Skip verification if no webhook ID configured (sandbox dev mode)
+  // Fail CLOSED: without a configured webhook ID we cannot verify the event,
+  // so we must reject it rather than trust it. (Previously this returned true,
+  // which let unsigned/forged events through and granted free Pro.)
   if (!PAYPAL_WEBHOOK_ID) {
-    console.warn('[PayPal Webhook] No PAYPAL_WEBHOOK_ID set — skipping signature verification')
-    return true
+    console.error('[PayPal Webhook] No PAYPAL_WEBHOOK_ID set — rejecting event (cannot verify)')
+    return false
   }
 
   try {
@@ -96,9 +99,8 @@ async function verifyWebhookSignature(
     return result.verification_status === 'SUCCESS'
   } catch (err) {
     console.error('[PayPal Webhook] Signature verification error:', err)
-    // In sandbox mode, verification often fails — allow it through
-    // TODO: In production, return false here
-    return true
+    // Fail CLOSED: if verification errors, reject rather than trust the event.
+    return false
   }
 }
 
