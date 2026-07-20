@@ -8,3 +8,6 @@ store-listing/*.tar.gz
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Supabase CLI local link cache
+supabase/.temp/
