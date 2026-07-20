@@ -3240,6 +3240,12 @@
       }
     });
 
+    // About: read the version from the manifest so it can never go stale
+    const aboutVersion = document.getElementById('aboutVersion');
+    if (aboutVersion) {
+      aboutVersion.textContent = 'ScriptPad v' + chrome.runtime.getManifest().version;
+    }
+
     // Keyboard
     document.addEventListener('keydown', handleKeyboard);
   }
