@@ -205,6 +205,7 @@
     authEmailInput: $('#authEmailInput'),
     authPasswordInput: $('#authPasswordInput'),
     authError: $('#authError'),
+    authForm: $('#authForm'),
     authSubmitBtn: $('#authSubmitBtn'),
     authToggleLink: $('#authToggleLink'),
     authForgotLink: $('#authForgotLink'),
@@ -1183,6 +1184,10 @@
     toggleLink.textContent = isSignup ? t('signInLink') : t('createAccount');
     // Show forgot password only on sign-in mode
     els.authForgotWrapper.style.display = isSignup ? 'none' : 'block';
+    // Tell the browser's password manager which mode this is: "new-password"
+    // prompts Chrome to offer to SAVE a password on account creation;
+    // "current-password" is for signing in with an existing one.
+    els.authPasswordInput.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
   }
 
   function showAuthError(msg) {
@@ -3133,7 +3138,10 @@
     if (els.changePwBtn) els.changePwBtn.addEventListener('click', handleChangePassword);
     els.upgradeFromSettings.addEventListener('click', openUpgrade);
     els.signInBackBtn.addEventListener('click', () => showView('settings'));
-    els.authSubmitBtn.addEventListener('click', handleAuth);
+    // Submit via the <form> so the browser/password manager treats this as a
+    // real login form (enables Chrome "save password" + autofill) and Enter
+    // submits. preventDefault stops the page from reloading.
+    els.authForm.addEventListener('submit', (e) => { e.preventDefault(); handleAuth(); });
     els.authPasswordInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleAuth();
     });
