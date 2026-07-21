@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScriptPad — Store Screenshot Framer</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171b23; --line:#272d38; --ink:#e8ecf1; --soft:#9aa4b2;
+    --accent:#6366f1; --accent2:#3b82f6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:22px;margin:0 0 4px}
+  .lede{color:var(--soft);margin:0 0 24px;font-size:14px}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  label{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--soft);font-weight:700;margin:16px 0 6px}
+  label:first-child{margin-top:0}
+  input[type=text],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px}
+  textarea{resize:vertical;min-height:52px}
+  input[type=file]{width:100%;font-size:13px;color:var(--soft)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .swatch{width:30px;height:30px;border-radius:8px;border:2px solid transparent;cursor:pointer}
+  .swatch.sel{border-color:#fff}
+  button{font:inherit;font-weight:700;cursor:pointer;border:none;border-radius:10px;padding:12px 16px}
+  .primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;width:100%;font-size:15px;margin-top:20px}
+  .ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line);font-size:13px;padding:8px 12px}
+  .stage{background:
+    repeating-conic-gradient(#1b2029 0% 25%, #151a22 0% 50%) 50% / 24px 24px;
+    border:1px solid var(--line);border-radius:14px;padding:16px;overflow:auto}
+  canvas{width:100%;height:auto;display:block;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .hint{font-size:12px;color:var(--soft);margin-top:10px}
+  .steps{font-size:13px;color:var(--soft);margin:8px 0 0;padding-left:18px}
+  .steps li{margin:4px 0}
+  .pill{display:inline-block;background:#20263180;border:1px solid var(--line);border-radius:999px;
+    padding:2px 9px;font-size:11px;color:var(--soft);margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ScriptPad — Store Screenshot Framer <span class="pill">outputs 1280×800 PNG</span></h1>
+  <p class="lede">Turn a plain side-panel screenshot into a polished Chrome Web Store image. Pick your screenshot, add a caption, download. No internet, nothing uploaded — it all happens in your browser.</p>
+
+  <div class="grid">
+    <div class="card">
+      <label>1 · Your screenshot</label>
+      <input type="file" id="file" accept="image/*">
+      <ol class="steps">
+        <li>Open ScriptPad, get the screen you want.</li>
+        <li>Mac: <b>Cmd+Shift+4</b>, drag over the panel.</li>
+        <li>Pick that file above.</li>
+      </ol>
+
+      <label>2 · Caption preset</label>
+      <select id="preset">
+        <option value="custom">— Custom —</option>
+        <option data-h="Every script, one click away" data-s="Openers, rebuttals, closers — organized and searchable">Main list</option>
+        <option data-h="Never lose your place on a call" data-s="Decision-tree scripts guide you step by step">Decision tree</option>
+        <option data-h="Ask AI mid-call" data-s="Instant answers from your own knowledge base">AI assistant</option>
+        <option data-h="Your whole team, one script library" data-s="Managers push updates to every agent instantly">Teams</option>
+        <option data-h="Find any script as you type" data-s="Fuzzy search across titles, tags and folders">Search</option>
+      </select>
+
+      <label>3 · Headline</label>
+      <input type="text" id="headline" value="Every script, one click away" maxlength="46">
+      <label>Sub-line</label>
+      <input type="text" id="subline" value="Openers, rebuttals, closers — organized and searchable" maxlength="72">
+
+      <label>4 · Background</label>
+      <div class="row" id="bgs"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost" id="sideL">Text left</button>
+        <button class="ghost" id="sideR">Text right</button>
+      </div>
+
+      <button class="primary" id="dl">⬇ Download PNG (1280×800)</button>
+      <p class="hint">Repeat for each screen. The store allows up to 5 screenshots — 4–5 is ideal.</p>
+    </div>
+
+    <div class="stage">
+      <canvas id="c" width="1280" height="800"></canvas>
+      <p class="hint">Live preview — this is exactly what downloads.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+let img=null, textSide='left';
+const themes=[
+  {a:'#6366f1',b:'#3b82f6',name:'Indigo'},
+  {a:'#7c3aed',b:'#db2777',name:'Violet'},
+  {a:'#0ea5e9',b:'#2563eb',name:'Sky'},
+  {a:'#111827',b:'#1f2937',name:'Slate'},
+  {a:'#059669',b:'#0891b2',name:'Teal'}
+];
+let theme=themes[0];
+
+const bgWrap=document.getElementById('bgs');
+themes.forEach((t,i)=>{
+  const s=document.createElement('div');
+  s.className='swatch'+(i===0?' sel':'');
+  s.style.background=`linear-gradient(135deg,${t.a},${t.b})`;
+  s.onclick=()=>{theme=t;[...bgWrap.children].forEach(e=>e.classList.remove('sel'));s.classList.add('sel');draw();};
+  bgWrap.appendChild(s);
+});
+
+function roundRect(ctx,X,Y,W,H,r){ctx.beginPath();ctx.moveTo(X+r,Y);
+  ctx.arcTo(X+W,Y,X+W,Y+H,r);ctx.arcTo(X+W,Y+H,X,Y+H,r);
+  ctx.arcTo(X,Y+H,X,Y,r);ctx.arcTo(X,Y,X+W,Y,r);ctx.closePath();}
+
+function wrap(ctx,text,maxW){
+  const words=text.split(' ');let lines=[],line='';
+  for(const w of words){const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;}
+  if(line)lines.push(line);return lines;
+}
+
+function draw(){
+  const W=1280,H=800;
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,theme.a);g.addColorStop(1,theme.b);
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  // subtle vignette
+  const rg=x.createRadialGradient(W/2,H/2,120,W/2,H/2,900);
+  rg.addColorStop(0,'rgba(255,255,255,0.05)');rg.addColorStop(1,'rgba(0,0,0,0.18)');
+  x.fillStyle=rg;x.fillRect(0,0,W,H);
+
+  const textLeft = textSide==='left';
+  const textX = textLeft ? 90 : 720;
+  const textMaxW = 470;
+
+  // headline + subline
+  const headline=document.getElementById('headline').value;
+  const subline=document.getElementById('subline').value;
+  x.textBaseline='alphabetic';
+  x.fillStyle='#fff';
+  x.font='700 46px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  const hl=wrap(x,headline,textMaxW);
+  let ty=H/2 - (hl.length*56 + 60)/2 + 46;
+  hl.forEach(l=>{x.fillText(l,textX,ty);ty+=56;});
+  x.fillStyle='rgba(255,255,255,0.86)';
+  x.font='400 22px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+  ty+=8;
+  wrap(x,subline,textMaxW).forEach(l=>{x.fillText(l,textX,ty);ty+=30;});
+
+  // brand lockup
+  x.fillStyle='rgba(255,255,255,0.92)';
+  x.font='800 20px system-ui'; x.fillText('⚡ ScriptPad', textX, H-70);
+
+  // device / screenshot
+  const panelX = textLeft ? 720 : 130;
+  if(img){
+    const boxH=660, boxW=Math.min(430, boxH*(img.width/img.height));
+    const dh=boxH, dw=boxH*(img.width/img.height);
+    const px=panelX+(430-Math.min(dw,430))/2, py=(H-dh)/2;
+    x.save();
+    x.shadowColor='rgba(0,0,0,0.45)';x.shadowBlur=48;x.shadowOffsetY=22;
+    roundRect(x,px,py,Math.min(dw,430),dh,22);x.fillStyle='#000';x.fill();
+    x.restore();
+    x.save();roundRect(x,px,py,Math.min(dw,430),dh,22);x.clip();
+    x.drawImage(img,px,py,Math.min(dw,430),dh);x.restore();
+  }else{
+    x.save();
+    x.setLineDash([10,8]);x.strokeStyle='rgba(255,255,255,0.55)';x.lineWidth=2;
+    roundRect(x,panelX+40,90,350,620,22);x.stroke();x.setLineDash([]);
+    x.fillStyle='rgba(255,255,255,0.8)';x.font='600 18px system-ui';x.textAlign='center';
+    x.fillText('Your screenshot',panelX+215,410);x.textAlign='left';
+    x.restore();
+  }
+}
+
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{img=new Image();img.onload=draw;img.src=r.result;};
+  r.readAsDataURL(f);
+});
+document.getElementById('preset').addEventListener('change',e=>{
+  const o=e.target.selectedOptions[0];
+  if(o.dataset.h){document.getElementById('headline').value=o.dataset.h;
+    document.getElementById('subline').value=o.dataset.s;draw();}
+});
+['headline','subline'].forEach(id=>document.getElementById(id).addEventListener('input',draw));
+document.getElementById('sideL').onclick=()=>{textSide='left';draw();};
+document.getElementById('sideR').onclick=()=>{textSide='right';draw();};
+document.getElementById('dl').addEventListener('click',()=>{
+  c.toBlob(b=>{const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='scriptpad-screenshot-'+Date.now()+'.png';a.click();},'image/png');
+});
+draw();
+</script>
+</body>
+</html>
