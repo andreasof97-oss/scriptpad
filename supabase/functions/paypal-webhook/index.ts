@@ -1,18 +1,21 @@
 // ScriptPad — PayPal Webhook Handler (Supabase Edge Function)
 // Receives PayPal webhook events and updates the subscriptions table
+//
+// NOTE: This function is deployed under the URL slug "smart-processor"
+// (dashboard function name "paypal-webhook"). PayPal's live webhook points at
+// .../functions/v1/smart-processor. Keep this file in sync with that function.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID')!
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET')!
 const PAYPAL_WEBHOOK_ID = Deno.env.get('PAYPAL_WEBHOOK_ID') || ''
-// Defaults to LIVE (the product ships in live mode). For sandbox testing,
-// set PAYPAL_API_BASE=https://api-m.sandbox.paypal.com in the function env.
+// Defaults to LIVE (the product ships live). For sandbox testing, set
+// PAYPAL_API_BASE=https://api-m.sandbox.paypal.com in the function env.
 const PAYPAL_API_BASE = Deno.env.get('PAYPAL_API_BASE') || 'https://api-m.paypal.com'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-// Monthly and annual plan IDs
 const MONTHLY_PLAN_ID = 'P-9H033465YN698702HNIVSKYA'
 const ANNUAL_PLAN_ID = 'P-6B464778JK873840BNIVSKYA'
 
@@ -20,9 +23,9 @@ interface PayPalWebhookEvent {
   id: string
   event_type: string
   resource: {
-    id: string                // subscription ID
+    id: string
     plan_id?: string
-    custom_id?: string        // our Supabase user ID
+    custom_id?: string
     status?: string
     subscriber?: {
       email_address?: string
@@ -39,7 +42,6 @@ interface PayPalWebhookEvent {
   }
 }
 
-// Get PayPal OAuth token
 async function getPayPalAccessToken(): Promise<string> {
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: 'POST',
@@ -49,30 +51,20 @@ async function getPayPalAccessToken(): Promise<string> {
     },
     body: 'grant_type=client_credentials',
   })
-
   const data = await response.json()
-  if (!response.ok) {
-    throw new Error(`PayPal auth failed: ${JSON.stringify(data)}`)
-  }
+  if (!response.ok) throw new Error(`PayPal auth failed: ${JSON.stringify(data)}`)
   return data.access_token
 }
 
-// Verify webhook signature with PayPal
-async function verifyWebhookSignature(
-  headers: Headers,
-  body: string
-): Promise<boolean> {
+async function verifyWebhookSignature(headers: Headers, body: string): Promise<boolean> {
   // Fail CLOSED: without a configured webhook ID we cannot verify the event,
-  // so we must reject it rather than trust it. (Previously this returned true,
-  // which let unsigned/forged events through and granted free Pro.)
+  // so reject it rather than trust it.
   if (!PAYPAL_WEBHOOK_ID) {
     console.error('[PayPal Webhook] No PAYPAL_WEBHOOK_ID set — rejecting event (cannot verify)')
     return false
   }
-
   try {
     const accessToken = await getPayPalAccessToken()
-
     const verifyPayload = {
       auth_algo: headers.get('paypal-auth-algo'),
       cert_url: headers.get('paypal-cert-url'),
@@ -82,18 +74,11 @@ async function verifyWebhookSignature(
       webhook_id: PAYPAL_WEBHOOK_ID,
       webhook_event: JSON.parse(body),
     }
-
-    console.log('[PayPal Webhook] Verifying signature with webhook ID:', PAYPAL_WEBHOOK_ID)
-
     const response = await fetch(`${PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(verifyPayload),
     })
-
     const result = await response.json()
     console.log('[PayPal Webhook] Verification result:', result.verification_status)
     return result.verification_status === 'SUCCESS'
@@ -104,33 +89,23 @@ async function verifyWebhookSignature(
   }
 }
 
-// Determine plan period from plan ID
 function getPlanPeriod(planId: string): 'monthly' | 'annual' {
   if (planId === ANNUAL_PLAN_ID) return 'annual'
   return 'monthly'
 }
 
 Deno.serve(async (req) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': '*',
-      },
+      headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': '*' },
     })
   }
-
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 })
-  }
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
 
   const body = await req.text()
   console.log('[PayPal Webhook] Raw body received, length:', body.length)
 
   let event: PayPalWebhookEvent
-
   try {
     event = JSON.parse(body)
   } catch {
@@ -140,156 +115,74 @@ Deno.serve(async (req) => {
 
   console.log(`[PayPal Webhook] Event: ${event.event_type}, Subscription: ${event.resource?.id}, User: ${event.resource?.custom_id}`)
 
-  // Verify PayPal signature (skips if no webhook ID configured)
   const isValid = await verifyWebhookSignature(req.headers, body)
   if (!isValid) {
-    console.error('[PayPal Webhook] Signature verification FAILED — rejecting')
+    console.error('[PayPal Webhook] Signature verification FAILED')
     return new Response('Unauthorized', { status: 401 })
   }
 
-  // Create Supabase admin client
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
   const subscriptionId = event.resource?.id
   const userId = event.resource?.custom_id
   const planId = event.resource?.plan_id
   const email = event.resource?.subscriber?.email_address
 
   switch (event.event_type) {
-    // Subscription activated (first payment successful)
     case 'BILLING.SUBSCRIPTION.ACTIVATED': {
-      if (!userId || !subscriptionId) {
-        console.error('[PayPal Webhook] Missing userId or subscriptionId')
-        break
-      }
-
+      if (!userId || !subscriptionId) { console.error('[PayPal Webhook] Missing userId or subscriptionId'); break }
       const period = planId ? getPlanPeriod(planId) : 'monthly'
       const nextBilling = event.resource?.billing_info?.next_billing_time
-
-      // Upsert subscription record
-      const { error } = await supabase
-        .from('subscriptions')
-        .upsert({
-          user_id: userId,
-          plan: 'pro',
-          status: 'active',
-          period,
-          paypal_subscription_id: subscriptionId,
-          paypal_email: email,
-          paypal_plan_id: planId,
-          current_period_end: nextBilling || null,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id'
-        })
-
-      if (error) {
-        console.error('[PayPal Webhook] Upsert error:', error)
-      } else {
-        console.log(`[PayPal Webhook] Activated Pro for user ${userId}`)
-      }
+      const { error } = await supabase.from('subscriptions').upsert({
+        user_id: userId, plan: 'pro', status: 'active', period,
+        paypal_subscription_id: subscriptionId, paypal_email: email,
+        paypal_plan_id: planId, current_period_end: nextBilling || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+      if (error) console.error('[PayPal Webhook] Upsert error:', error)
+      else console.log(`[PayPal Webhook] Activated Pro for user ${userId}`)
       break
     }
-
-    // Subscription payment completed (recurring payment)
     case 'PAYMENT.SALE.COMPLETED': {
-      // For sale events, the subscription ID is in billing_agreement_id, not id
-      const saleSubscriptionId = (event.resource as any).billing_agreement_id || subscriptionId
-      if (saleSubscriptionId) {
-        const { data: existing } = await supabase
-          .from('subscriptions')
-          .select('user_id')
-          .eq('paypal_subscription_id', saleSubscriptionId)
-          .maybeSingle()
-
+      const saleSubId = (event.resource as any).billing_agreement_id || subscriptionId
+      if (saleSubId) {
+        const { data: existing } = await supabase.from('subscriptions').select('user_id').eq('paypal_subscription_id', saleSubId).maybeSingle()
         if (existing) {
-          await supabase
-            .from('subscriptions')
-            .update({
-              status: 'active',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('paypal_subscription_id', saleSubscriptionId)
-
-          console.log(`[PayPal Webhook] Renewal payment for subscription ${saleSubscriptionId}`)
-        } else {
-          console.log(`[PayPal Webhook] No matching subscription found for ${saleSubscriptionId}`)
-        }
+          await supabase.from('subscriptions').update({ status: 'active', updated_at: new Date().toISOString() }).eq('paypal_subscription_id', saleSubId)
+          console.log(`[PayPal Webhook] Renewal payment for ${saleSubId}`)
+        } else console.log(`[PayPal Webhook] No matching subscription for ${saleSubId}`)
       }
       break
     }
-
-    // Subscription cancelled
     case 'BILLING.SUBSCRIPTION.CANCELLED': {
       if (subscriptionId) {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({
-            status: 'cancelled',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('paypal_subscription_id', subscriptionId)
-
-        if (error) {
-          console.error('[PayPal Webhook] Cancel update error:', error)
-        } else {
-          console.log(`[PayPal Webhook] Subscription cancelled: ${subscriptionId}`)
-        }
+        const { error } = await supabase.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('paypal_subscription_id', subscriptionId)
+        if (error) console.error('[PayPal Webhook] Cancel error:', error)
+        else console.log(`[PayPal Webhook] Cancelled: ${subscriptionId}`)
       }
       break
     }
-
-    // Subscription suspended (missed payments)
     case 'BILLING.SUBSCRIPTION.SUSPENDED': {
       if (subscriptionId) {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({
-            status: 'suspended',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('paypal_subscription_id', subscriptionId)
-
-        if (error) {
-          console.error('[PayPal Webhook] Suspend update error:', error)
-        } else {
-          console.log(`[PayPal Webhook] Subscription suspended: ${subscriptionId}`)
-        }
+        const { error } = await supabase.from('subscriptions').update({ status: 'suspended', updated_at: new Date().toISOString() }).eq('paypal_subscription_id', subscriptionId)
+        if (error) console.error('[PayPal Webhook] Suspend error:', error)
+        else console.log(`[PayPal Webhook] Suspended: ${subscriptionId}`)
       }
       break
     }
-
-    // Subscription expired
     case 'BILLING.SUBSCRIPTION.EXPIRED': {
       if (subscriptionId) {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({
-            status: 'expired',
-            plan: 'free',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('paypal_subscription_id', subscriptionId)
-
-        if (error) {
-          console.error('[PayPal Webhook] Expire update error:', error)
-        } else {
-          console.log(`[PayPal Webhook] Subscription expired: ${subscriptionId}`)
-        }
+        const { error } = await supabase.from('subscriptions').update({ status: 'expired', plan: 'free', updated_at: new Date().toISOString() }).eq('paypal_subscription_id', subscriptionId)
+        if (error) console.error('[PayPal Webhook] Expire error:', error)
+        else console.log(`[PayPal Webhook] Expired: ${subscriptionId}`)
       }
       break
     }
-
     default:
-      console.log(`[PayPal Webhook] Unhandled event type: ${event.event_type}`)
+      console.log(`[PayPal Webhook] Unhandled event: ${event.event_type}`)
   }
 
-  // Always return 200 to acknowledge receipt
   return new Response(JSON.stringify({ received: true }), {
     status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   })
 })
