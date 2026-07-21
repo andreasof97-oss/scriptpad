@@ -2730,6 +2730,17 @@
 
       clearTimeout(timeoutId);
 
+      // Server-enforced responses: not signed in, or daily limit reached.
+      if (response.status === 401) {
+        state.aiMessages.push({ role: 'error', content: t('aiSignInRequired') });
+        renderAIMessages();
+        return;
+      }
+      if (response.status === 429) {
+        state.aiMessages.push({ role: 'error', content: t('aiDailyLimit') });
+        renderAIMessages();
+        return;
+      }
       if (!response.ok) {
         throw new Error(`API ${response.status}`);
       }

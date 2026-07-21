@@ -22,10 +22,16 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  // Daily AI limits per account, enforced server-side (cannot be bypassed by
+  // the client). Free accounts get FREE_DAILY; Pro accounts get PRO_DAILY. The
+  // Pro cap is generous for one person but stops a single shared login from
+  // serving a whole team for free and running up the AI bill.
+  const FREE_DAILY = 5;
+  const PRO_DAILY = 100;
+
   // Require a signed-in ScriptPad user. The public anon key is a valid JWT but
   // has role "anon"; supabase.auth.getUser() only returns a user for a real
-  // account token, so this rejects anonymous callers and stops the endpoint
-  // from being used to drain the AI budget.
+  // account token, so this rejects anonymous callers.
   const authHeader = req.headers.get('Authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
@@ -34,6 +40,8 @@ Deno.serve(async (req: Request) => {
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+
+  let userId: string;
   try {
     const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -47,11 +55,44 @@ Deno.serve(async (req: Request) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    userId = user.id;
   } catch (_e) {
     return new Response(
       JSON.stringify({ error: 'auth_required' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+  }
+
+  // Enforce the per-account daily cap using the service role. If this table or
+  // function isn't set up yet (SUPABASE_AI_USAGE_SETUP.sql not run), we log and
+  // allow, so the endpoint keeps working — the cap simply isn't active until
+  // the SQL is applied.
+  try {
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const { data: sub } = await adminClient
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    const cap = sub?.plan === 'pro' ? PRO_DAILY : FREE_DAILY;
+
+    const { data: allowed, error: usageErr } = await adminClient
+      .rpc('check_and_increment_ai_usage', { p_user_id: userId, p_cap: cap });
+
+    if (usageErr) {
+      console.error('[ai-assistant] usage check failed (allowing):', usageErr.message);
+    } else if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: 'daily_limit' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  } catch (e) {
+    console.error('[ai-assistant] usage check error (allowing):', e);
   }
 
   try {
