@@ -801,6 +801,90 @@
   </div>
 </footer>
 
+<!-- PASSWORD RECOVERY OVERLAY (shown only when arriving from a Supabase reset email) -->
+<div id="pwRecoveryOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,12,20,0.96);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#151a24;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:420px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.5);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;">
+    <div style="font-size:34px;text-align:center;margin-bottom:8px;">⚡</div>
+    <h2 style="color:#fff;text-align:center;margin:0 0 6px;font-size:21px;">Set a new password</h2>
+    <p style="color:#9aa4b2;text-align:center;margin:0 0 22px;font-size:14px;line-height:1.5;">Choose a new password for your ScriptPad account.</p>
+    <input id="pwNew" type="password" placeholder="New password" autocomplete="new-password"
+      style="width:100%;box-sizing:border-box;padding:13px 14px;margin-bottom:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1017;color:#fff;font-size:15px;">
+    <input id="pwConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password"
+      style="width:100%;box-sizing:border-box;padding:13px 14px;margin-bottom:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#0d1017;color:#fff;font-size:15px;">
+    <button id="pwSubmit"
+      style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Update password</button>
+    <div id="pwMsg" style="text-align:center;margin-top:16px;font-size:14px;min-height:20px;line-height:1.5;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ---- Password recovery flow (handles the link from Supabase reset emails) ----
+  (function () {
+    var SUPABASE_URL = 'https://okwbfzzbysfkpiuobjkx.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rd2JmenpieXNma3BpdW9iamt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzUyNTQsImV4cCI6MjA5NjYxMTI1NH0.VY6w2ul8SCcTYfTeq07y_yXiw5lEkKITZykY_wo1oYk';
+
+    var overlay = document.getElementById('pwRecoveryOverlay');
+    var msg = document.getElementById('pwMsg');
+    var submit = document.getElementById('pwSubmit');
+    var newIn = document.getElementById('pwNew');
+    var confirmIn = document.getElementById('pwConfirm');
+
+    function setMsg(text, ok) {
+      msg.textContent = text;
+      msg.style.color = ok ? '#4ade80' : '#f87171';
+    }
+    function showOverlay() {
+      if (overlay.style.display !== 'flex') { overlay.style.display = 'flex'; try { newIn.focus(); } catch (e) {} }
+    }
+
+    // Read the URL FIRST — Supabase clears the token from the URL as it starts
+    // up, so we must detect the reset link before creating the client.
+    var url = (window.location.hash || '') + ' ' + (window.location.search || '');
+    var looksLikeRecovery = /type=recovery/.test(url) || /access_token=/.test(url) || /[?&#]code=/.test(url);
+    if (looksLikeRecovery) showOverlay();
+
+    // If the Supabase library didn't load, still show the form but explain.
+    if (!window.supabase || !window.supabase.createClient) {
+      if (looksLikeRecovery) setMsg('Could not load the reset tool — please refresh the page.', false);
+      return;
+    }
+
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
+    });
+
+    // Supabase also fires PASSWORD_RECOVERY once it parses the token — belt and braces.
+    client.auth.onAuthStateChange(function (event) {
+      if (event === 'PASSWORD_RECOVERY') showOverlay();
+    });
+
+    submit.addEventListener('click', function () {
+      var p1 = newIn.value.trim();
+      var p2 = confirmIn.value.trim();
+      if (p1.length < 6) { setMsg('Password must be at least 6 characters.', false); return; }
+      if (p1 !== p2) { setMsg('Passwords don\'t match.', false); return; }
+      submit.disabled = true;
+      setMsg('Updating…', true);
+      client.auth.updateUser({ password: p1 }).then(function (res) {
+        submit.disabled = false;
+        if (res.error) { setMsg(res.error.message || 'That reset link may have expired — request a new one.', false); return; }
+        setMsg('✅ Password updated! You can now sign in from the ScriptPad extension.', true);
+        newIn.style.display = 'none';
+        confirmIn.style.display = 'none';
+        submit.style.display = 'none';
+        history.replaceState(null, '', window.location.pathname); // strip token from URL
+      }).catch(function () {
+        submit.disabled = false;
+        setMsg('Something went wrong. Please request a new reset link.', false);
+      });
+    });
+    [newIn, confirmIn].forEach(function (el) {
+      el.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit.click(); });
+    });
+  })();
+</script>
+
 <script>
   // ---- i18n translations ----
   const translations = {

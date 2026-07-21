@@ -98,7 +98,12 @@ const Auth = (() => {
   }
 
   async function resetPassword(email) {
-    const { data, error } = await client.auth.resetPasswordForEmail(email);
+    // Send the reset link to the page that actually handles setting a new
+    // password (docs/index.html on GitHub Pages). Without this, the link uses
+    // Supabase's default Site URL and can land on a page with no reset form.
+    const { data, error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://andreasof97-oss.github.io/scriptpad/'
+    });
     if (error) throw error;
     return data;
   }
