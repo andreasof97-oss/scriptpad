@@ -442,7 +442,12 @@
   }
 
   // ---- Render: Main List ----
+  // Bumped on every renderMain() so a slower async section (Most Used) knows
+  // whether it belongs to the latest render or a superseded one.
+  let renderGen = 0;
+
   function renderMain() {
+    const gen = ++renderGen;
     const content = els.panelContent;
     content.innerHTML = '';
 
@@ -514,8 +519,12 @@
       return;
     }
 
-    // Most Used (analytics-powered)
-    renderMostUsedSection(content);
+    // Most Used (analytics-powered). Reserve its slot here so it always sits
+    // above Pinned, then fill it asynchronously — the slot + render generation
+    // prevent the duplicate/stale copies a plain async append could create.
+    const mostUsedSlot = document.createElement('div');
+    content.appendChild(mostUsedSlot);
+    renderMostUsedSection(mostUsedSlot, gen);
 
     // Pinned
     const pinned = state.scripts.filter(s => s.pinned);
@@ -553,8 +562,13 @@
   }
 
   // ---- Analytics: Most Used Section ----
-  async function renderMostUsedSection(container) {
+  async function renderMostUsedSection(slot, gen) {
     const topScripts = await StorageAPI.getTopScripts(3);
+    // If another renderMain() ran while we were loading, this slot is stale —
+    // do nothing, so we never append a duplicate or fill a discarded slot.
+    if (gen !== renderGen) return;
+    slot.innerHTML = '';
+
     if (topScripts.length === 0) return;
 
     // Only show if there's meaningful data (at least 2 total events)
@@ -586,7 +600,7 @@
       section.appendChild(div);
     });
 
-    container.appendChild(section);
+    slot.appendChild(section);
   }
 
   // Highlight matching text in search results
