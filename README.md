@@ -63,7 +63,9 @@ ScriptPad stores everything **locally on your device**. No accounts, no servers,
 
 ## 📄 License
 
-MIT
+Proprietary — © 2026 Andrea Martinez (ScriptPad). All rights reserved.
+The source is public for transparency only; copying, reuse, or redistribution
+is not permitted without written permission. See [LICENSE](LICENSE).
 
 ---
 
